@@ -4,23 +4,25 @@
 """
 ASX EOD downloader (Yahoo Finance, yfinance)
 
-Version: Hard-coded tickers, 3-decimal rounding with zero-padding.
+Version: Hard-coded tickers & shares (2D array),
+          3-decimal rounding with zero-padding for prices,
+          Value = Shares × Close, rounded to 2 dp and zero-padded.
 
 Features:
-1) Consolidated output CSV (DailyData.csv) sorted by Date.
-2) Columns: Date, Ticker, Open, High, Low, Close, Adj Close, Volume.
-3) Price data rounded to 3 dp and padded with trailing zeros.
-4) No command-line arguments.30/10/2025
-5) Hard-coded list of ASX tickers below.
+1) Consolidated CSV (DailyData.csv) sorted by Date.
+2) Columns: Date, Ticker, Shares, Open, High, Low, Close, Volume, Value.
+3) Price data rounded to 3 dp (zero-padded).
+4) Value rounded to 2 dp (zero-padded, e.g. 5145.60).
+5) No command-line arguments; only prompts for date range.
+6) Hard-coded [Ticker, Shares] pairs in a 2D array.
 """
 
 import os
 import sys
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 # ---- Dependencies ----
-# pip install yfinance pandas
 try:
     import pandas as pd
     import yfinance as yf
@@ -28,35 +30,36 @@ except ImportError:
     print("Missing dependencies. Please run:\n  pip install yfinance pandas")
     sys.exit(1)
 
-# Disable caching quirks on OneDrive
 os.environ["YF_NO_CACHE"] = "1"
 
 # ---- User settings ----
 OUTPUT_DIR = "asx_eod_output"
 OUTPUT_CSV = "DailyData.csv"
 
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-# 🔧 EDIT YOUR DEFAULT TICKERS HERE:
-TICKERS = ["ALK.AX",
-           "AMP.AX",
-           "ASM.AX",
-           "BHP.AX",
-           "CAN.AX",
-           "CBA.AX",
-           "CNB.AX",
-           "E25.AX",
-           "ERA.AX",
-           "PTR.AX",
-           "VML.AX",
-           "WBC.AX",
-           "WDS.AX"]
-# <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+# 🔧 EDIT YOUR HOLDINGS HERE (2D array: [ [Ticker, Shares], ... ])
+TICKERS_AND_SHARES: List[Tuple[str, int]] = [
+    ["ALK.AX", 153181],
+    ["AMP.AX", 70000], 
+    ["ASM.AX", 57458],
+    ["BHP.AX", 16327],
+    ["CAN.AX", 44090],
+    ["CBA.AX", 0],
+    ["CNB.AX", 10000],
+    ["E25.AX", 20000],
+    ["ERA.AX", 700000],
+    ["PTR.AX", 9412],  
+    ["VML.AX", 6000],
+    ["WBC.AX", 0],
+    ["WDS.AX", 1288],
+] # type: ignore
+TICKERS = [sym for sym, _ in TICKERS_AND_SHARES]
+SHARES_MAP = {sym: int(sh) for sym, sh in TICKERS_AND_SHARES}
 
 
+27/10/2025
 # ---------- Utilities ----------
 
 def parse_date_any(s: str) -> Optional[datetime]:
-    """Parse AU-friendly and ISO date formats."""
     s = s.strip()
     if not s:
         return None
@@ -80,20 +83,21 @@ def normalize_yf_panel(df: pd.DataFrame, tickers: List[str]) -> pd.DataFrame:
         df = pd.concat({tickers[0]: df}, axis=1)
 
     records = []
+    available_lvl0 = set(df.columns.get_level_values(0))
     for t in tickers:
-        if t not in df.columns.get_level_values(0):
+        if t not in available_lvl0:
             continue
         sub = df[t].copy()
-        for k in ["Open", "High", "Low", "Close", "Adj Close", "Volume"]:
+        for k in ["Open", "High", "Low", "Close", "Volume"]:
             if k not in sub.columns:
                 sub[k] = pd.NA
-        sub = sub[["Open", "High", "Low", "Close", "Adj Close", "Volume"]]
+        sub = sub[["Open", "High", "Low", "Close", "Volume"]]
         sub = sub.reset_index().rename(columns={"index": "Date"})
         sub.insert(0, "Ticker", t)
         records.append(sub)
 
     if not records:
-        return pd.DataFrame(columns=["Ticker", "Date", "Open", "High", "Low", "Close", "Adj Close", "Volume"])
+        return pd.DataFrame(columns=["Ticker", "Date", "Open", "High", "Low", "Close", "Volume"])
 
     out = pd.concat(records, ignore_index=True)
     out["Date"] = pd.to_datetime(out["Date"]).dt.tz_localize(None)
@@ -101,9 +105,10 @@ def normalize_yf_panel(df: pd.DataFrame, tickers: List[str]) -> pd.DataFrame:
 
 
 def prompt_dates() -> (datetime, datetime):
-    """Prompt for start/end dates."""
     print("\n=== ASX EOD Downloader ===")
-    print(f"Using hard-coded tickers: {', '.join(TICKERS)}")
+    print("Using hard-coded holdings:")
+    for sym, sh in TICKERS_AND_SHARES:
+        print(f"  - {sym}: {sh} shares")
 
     default_start = (datetime.today() - timedelta(days=60)).strftime("%Y-%m-%d")
     default_end   = datetime.today().strftime("%Y-%m-%d")
@@ -115,7 +120,7 @@ def prompt_dates() -> (datetime, datetime):
     end_dt   = parse_date_any(end_s)
 
     if not start_dt or not end_dt:
-        print("Invalid date(s). Please use formats like 2025-10-25 or 25/10/2025.")
+        print("Invalid date(s). Use formats like 2025-10-25 or 25/10/2025.")
         sys.exit(2)
     if end_dt < start_dt:
         print("End date cannot precede start date.")
@@ -126,6 +131,10 @@ def prompt_dates() -> (datetime, datetime):
 # ---------- Main ----------
 
 def main():
+    if not TICKERS_AND_SHARES:
+        print("No holdings defined. Please populate TICKERS_AND_SHARES.")
+        sys.exit(2)
+
     tickers = TICKERS
     start_dt, end_dt = prompt_dates()
     end_plus_one = end_dt + timedelta(days=1)
@@ -157,20 +166,31 @@ def main():
         print("No valid data found for selected tickers.")
         sys.exit(5)
 
-    # ---- Round price data to 3 dp and pad with zeros ----
-    price_cols = ["Open", "High", "Low", "Close", "Adj Close"]
+    # ---- Attach Shares ----
+    df["Shares"] = df["Ticker"].map(SHARES_MAP).astype("Int64")
+
+    # ---- Compute Value = Shares × Close ----
+    close_numeric = pd.to_numeric(df["Close"], errors="coerce")
+    df["Value"] = (df["Shares"].astype("float64") * close_numeric).round(2)
+    # Convert to string with 2dp and zero padding
+    df["Value"] = df["Value"].apply(lambda x: f"{x:.2f}" if pd.notna(x) else "")
+
+    # ---- Round and format price data (3 dp padded) ----
+    price_cols = ["Open", "High", "Low", "Close"]
     for c in price_cols:
-        if c in df.columns:
-            df[c] = pd.to_numeric(df[c], errors="coerce").round(3)
-            # Convert to string padded with zeros
-            df[c] = df[c].apply(lambda x: f"{x:.3f}" if pd.notna(x) else "")
+        df[c] = pd.to_numeric(df[c], errors="coerce").round(3)
+        df[c] = df[c].apply(lambda x: f"{x:.3f}" if pd.notna(x) else "")
 
-    # ---- Reorder columns (Date first) and sort ----
-    cols = [c for c in df.columns if c not in ("Date", "Ticker")]
-    ordered_cols = ["Date", "Ticker"] + cols
-    df = df[ordered_cols].sort_values(["Date", "Ticker"]).reset_index(drop=True)
+    # ---- Ensure Volume is numeric ----
+    df["Volume"] = pd.to_numeric(df["Volume"], errors="coerce").astype("Int64")
 
-    # ---- Save output ----
+    # ---- Reorder columns ----
+    base_order = ["Date", "Ticker", "Shares", "Open", "High", "Low", "Close", "Volume", "Value"]
+    existing = [c for c in base_order if c in df.columns]
+    extras = [c for c in df.columns if c not in existing]
+    df = df[existing + extras].sort_values(["Date", "Ticker"]).reset_index(drop=True)
+
+    # ---- Save ----
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     out_path = os.path.join(OUTPUT_DIR, OUTPUT_CSV)
     df.to_csv(out_path, index=False)
