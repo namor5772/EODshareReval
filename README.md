@@ -1,25 +1,27 @@
-# EOD Share Revaluation / ASX End‑of‑Day Downloader
+# EOD Share Revaluation / ASX End-of-Day Downloader
 
-This project downloads historical End‑of‑Day (EOD) price data for selected ASX tickers from Yahoo Finance using `yfinance`, applies rounding and formatting rules, and generates a consolidated CSV (`DailyData.csv`) that includes both market data and per‑holding value calculations.
+This project downloads historical End-of-Day (EOD) price data for selected ASX tickers from Yahoo Finance using `yfinance`, applies rounding and formatting rules, and generates a consolidated CSV (`asx_eod_output/DailyData.csv`) that includes both market data and per-holding value calculations.
 
-The script is designed for personal share portfolio tracking and can be run manually from the terminal. It does **not** require API keys. It was however crafted by using ChatGPT-5 as was this Readme file.
+The script is designed for personal share portfolio tracking and can be run manually from the terminal. It does not require API keys.
 
 ---
 
-## ✨ Features
+## Features
 
 - Downloads daily OHLCV data for multiple ASX tickers.
-- Uses a hard‑coded list of `[Ticker, Shares]` pairs to represent your portfolio.
-- Calculates **Value = Shares × Close Price** for each security, formatted to **2 decimal places**.
-- Price data rounded and zero‑padded to **3 decimal places**.
-- Produces a clean, consolidated CSV output:
+- Reads holdings from `asx_eod_output/Tickers_and_Shares.txt` (one `TICKER,SHARES` per line).
+- Calculates Value = Shares × Close Price for each security, formatted to 2 decimal places.
+- Price data rounded and zero‑padded to 3 decimal places.
+- Produces a clean, consolidated CSV output with columns:
   - `Date, Ticker, Shares, Open, High, Low, Close, Volume, Value`
 - Saves output to: `asx_eod_output/DailyData.csv`
 - Prompts for start and end dates, with convenience defaults.
 
+Note: If `Tickers_and_Shares.txt` is missing or empty, the script falls back to its built‑in holdings list and will indicate this when starting.
+
 ---
 
-## 📦 Requirements
+## Requirements
 
 Install Python dependencies:
 
@@ -29,7 +31,7 @@ pip install pandas yfinance
 
 ---
 
-## ▶️ Usage
+## Usage
 
 Run the script from the terminal:
 
@@ -44,17 +46,30 @@ Start date [default]
 End date   [default]
 ```
 
-Dates may be entered in formats such as:
+Accepted date formats:
 
-- `2025-01-31`
-- `31/01/2025`
-- `31-01-2025`
+- `YYYY-MM-DD` (e.g., `2025-01-31`)
+- `DD/MM/YYYY` (e.g., `31/01/2025`)
+- `DD-MM-YYYY` (e.g., `31-01-2025`)
 
 If no input is given, defaults are applied.
 
 ---
 
-## 🧾 Output Example
+## Holdings File
+
+- Location: `asx_eod_output/Tickers_and_Shares.txt`
+- Format per line: `TICKER,SHARES` or `TICKER SHARES`
+- Examples:
+  - `BHP.AX,120`
+  - `CBA.AX 50`
+- Blank lines and lines starting with `#` or `//` are ignored.
+
+Changes to this file take effect the next time you run the script.
+
+---
+
+## Output Example
 
 ```
 Date,Ticker,Shares,Open,High,Low,Close,Volume,Value
@@ -63,45 +78,26 @@ Date,Ticker,Shares,Open,High,Low,Close,Volume,Value
 
 ---
 
-## 🛠 Customising Your Portfolio
-
-Edit the array inside the script:
-
-```python
-TICKERS_AND_SHARES = [
-    ["BHP.AX", 120],
-    ["CBA.AX", 50],
-    ["WES.AX", 80],
-]
-```
-
-Changing values here automatically changes downstream calculations.
-
----
-
-## 📁 Project Structure
+## Project Structure
 
 ```
 EODshareReval/
-│
-├── asx_eod_downloader.py   # Main script
-├── README.md               # This file
-└── asx_eod_output/
-    └── DailyData.csv       # Generated output file
+  asx_eod_downloader.py        # Main script
+  README.md                    # This file
+  asx_eod_output/
+    Tickers_and_Shares.txt     # Portfolio holdings (TICKER,SHARES)
+    DailyData.csv              # Generated output file
 ```
 
 ---
 
-## 📜 License
+## License
 
-This project is provided under a permissive personal‑use basis.
-You may modify and reuse it freely.
-
----
-
-## 🤝 Contributions
-
-Pull requests and improvements are welcome.
-If you add features, feel free to share suggestions or enhancements!
+This project is provided for personal use. You may modify and reuse it freely.
 
 ---
+
+## Contributions
+
+Pull requests and improvements are welcome. If you add features, feel free to share suggestions or enhancements!
+

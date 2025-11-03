@@ -4,7 +4,7 @@
 """
 ASX EOD downloader (Yahoo Finance, yfinance)
 
-Version: Hard-coded tickers & shares (2D array),
+Version: Loads holdings from asx_eod_output/Tickers_and_Shares.txt,
           3-decimal rounding with zero-padding for prices,
           Value = Shares × Close, rounded to 2 dp and zero-padded.
 
@@ -14,13 +14,14 @@ Features:
 3) Price data rounded to 3 dp (zero-padded).
 4) Value rounded to 2 dp (zero-padded, e.g. 5145.60).
 5) No command-line arguments; only prompts for date range.
-6) Hard-coded [Ticker, Shares] pairs in a 2D array.
+6) Holdings read from asx_eod_output/Tickers_and_Shares.txt.
 """
 
 import os
 import sys
 from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
+import re
 
 # ---- Dependencies ----
 try:
@@ -35,6 +36,45 @@ os.environ["YF_NO_CACHE"] = "1"
 # ---- User settings ----
 OUTPUT_DIR = "asx_eod_output"
 OUTPUT_CSV = "DailyData.csv"
+HOLDINGS_FILE = os.path.join(OUTPUT_DIR, "Tickers_and_Shares.txt")
+
+def load_holdings(path: str) -> List[Tuple[str, int]]:
+    """Load [Ticker, Shares] pairs from a text file.
+
+    Accepted line formats (one per line):
+      - TICKER,SHARES
+      - TICKER SHARES
+    Lines starting with '#' or '//' are comments.
+    """
+    holdings: List[Tuple[str, int]] = []
+    file_path = os.path.join(os.path.dirname(__file__), path)
+    if not os.path.exists(file_path):
+        return holdings
+
+    with open(file_path, "r", encoding="utf-8") as f:
+        for lineno, raw in enumerate(f, start=1):
+            line = raw.strip()
+            if not line or line.startswith("#") or line.startswith("//"):
+                continue
+            if "," in line:
+                parts = [p.strip() for p in line.split(",") if p.strip()]
+            else:
+                parts = re.split(r"\s+", line)
+            if len(parts) < 2:
+                print(f"Warning: Skipping malformed line {lineno} in {path}: {raw.rstrip()}")
+                continue
+            ticker = parts[0].strip().strip('"\'')
+            shares_s = parts[1].strip()
+            try:
+                shares = int(float(shares_s))
+            except ValueError:
+                print(f"Warning: Invalid shares at line {lineno} in {path}: {shares_s}")
+                continue
+            if not ticker:
+                print(f"Warning: Empty ticker at line {lineno} in {path}")
+                continue
+            holdings.append((ticker, shares))
+    return holdings
 
 # 🔧 EDIT YOUR HOLDINGS HERE (2D array: [ [Ticker, Shares], ... ])
 TICKERS_AND_SHARES: List[Tuple[str, int]] = [
@@ -55,15 +95,21 @@ TICKERS_AND_SHARES: List[Tuple[str, int]] = [
 TICKERS = [sym for sym, _ in TICKERS_AND_SHARES]
 SHARES_MAP = {sym: int(sh) for sym, sh in TICKERS_AND_SHARES}
 
+# Optionally override with file-based holdings if present
+HOLDINGS_FROM_FILE = False
+_loaded_holdings = load_holdings(HOLDINGS_FILE)
+if _loaded_holdings:
+    TICKERS_AND_SHARES = _loaded_holdings
+    TICKERS = [sym for sym, _ in TICKERS_AND_SHARES]
+    SHARES_MAP = {sym: int(sh) for sym, sh in TICKERS_AND_SHARES}
+    HOLDINGS_FROM_FILE = True
 
-27/10/2025
 # ---------- Utilities ----------
-
 def parse_date_any(s: str) -> Optional[datetime]:
     s = s.strip()
     if not s:
         return None
-    fmts = ["%d/%m/%Y", "%d-%m-%Y", "%Y-%m-%d", "%Y/%m/%d"]
+    fmts = ["%d/%m/%Y", "%d-%m-%Y", "%Y-%m-%d", "%Y/%m/%d", "%d/%m/%y", "%d-%m-%y"]
     for f in fmts:
         try:
             return datetime.strptime(s, f)
@@ -104,9 +150,12 @@ def normalize_yf_panel(df: pd.DataFrame, tickers: List[str]) -> pd.DataFrame:
     return out
 
 
-def prompt_dates() -> (datetime, datetime):
+def prompt_dates() -> (datetime, datetime): # type: ignore
     print("\n=== ASX EOD Downloader ===")
-    print("Using hard-coded holdings:")
+    print(
+        f"Using holdings loaded from {HOLDINGS_FILE}:" if HOLDINGS_FROM_FILE
+        else "Using default hard-coded holdings:"
+    )
     for sym, sh in TICKERS_AND_SHARES:
         print(f"  - {sym}: {sh} shares")
 
@@ -132,7 +181,7 @@ def prompt_dates() -> (datetime, datetime):
 
 def main():
     if not TICKERS_AND_SHARES:
-        print("No holdings defined. Please populate TICKERS_AND_SHARES.")
+        print(f"No holdings defined. Create {HOLDINGS_FILE} with lines like 'BHP.AX,120'.")
         sys.exit(2)
 
     tickers = TICKERS

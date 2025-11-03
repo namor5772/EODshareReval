@@ -1,0 +1,18 @@
+# One holding per line. Accepted formats:
+#   TICKER,SHARES
+#   TICKER SHARES
+# Lines starting with # or // are comments. Shares are integers.
+
+ALK.AX,153181
+AMP.AX,70000
+ASM.AX,57458
+BHP.AX,16327
+CAN.AX,44090
+CBA.AX,0
+CNB.AX,10000
+E25.AX,20000
+ERA.AX,700000
+PTR.AX,9412
+VML.AX,6000
+WBC.AX,0
+WDS.AX,1288
