@@ -12,14 +12,14 @@ Most of this app has been designed using Open AI.
 
 - Downloads daily OHLCV data for multiple ASX tickers.
 - Reads holdings from `asx_eod_output/Tickers_and_Shares.txt` (one `TICKER,SHARES` per line).
-- Calculates Value = Shares × Close Price for each security, formatted to 2 decimal places.
-- Price data rounded and zero‑padded to 3 decimal places.
+- Calculates Value = Shares * Close Price for each security, formatted to 2 decimal places.
+- Price data rounded and zero-padded to 3 decimal places.
 - Produces a clean, consolidated CSV output with columns:
   - `Date, Ticker, Shares, Open, High, Low, Close, Volume, Value`
 - Saves output to: `asx_eod_output/DailyData.csv`
 - Prompts for start and end dates, with convenience defaults.
 
-Note: If `Tickers_and_Shares.txt` is missing or empty, the script falls back to its built‑in holdings list and will indicate this when starting.
+Note: If `Tickers_and_Shares.txt` is missing or empty, the script falls back to its built-in holdings list and will indicate this when starting.
 
 ---
 
@@ -55,6 +55,18 @@ Accepted date formats:
 - `DD-MM-YYYY` (e.g., `31-01-2025`)
 
 If no input is given, defaults are applied.
+
+### Overwrite-Then-Append logic
+
+When `asx_eod_output/DailyData.csv` already exists:
+
+- The default Start date is set to the last date present in the CSV (so it can be refreshed).
+- The script downloads data starting from that date up to your End date.
+- It removes the existing rows for that last date from the CSV and writes back fresh data for that date, then appends any newer dates.
+- If the download does not include that last date (for example, you choose an earlier range), it simply appends rows for dates strictly newer than the last date already in the CSV.
+- If your End date is before the adjusted Start date, the script adjusts End = Start to keep the range valid.
+
+Tip: To refresh the last day and append the current day using defaults, just press Enter twice at the prompts.
 
 ---
 
@@ -102,4 +114,3 @@ This project is provided for personal use. You may modify and reuse it freely.
 ## Contributions
 
 Pull requests and improvements are welcome. If you add features, feel free to share suggestions or enhancements!
-
