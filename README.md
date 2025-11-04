@@ -68,6 +68,14 @@ When `asx_eod_output/DailyData.csv` already exists:
 
 Tip: To refresh the last day and append the current day using defaults, just press Enter twice at the prompts.
 
+### Non-interactive mode (PROMPT flag)
+
+- The script has a boolean flag near the top: `PROMPT: bool = True`.
+- Set `PROMPT = False` to skip prompts and use the default dates automatically (equivalent to pressing Enter for both prompts).
+- Defaults:
+  - Start = last date present in `DailyData.csv` (to refresh it) if the file exists, otherwise 60 days ago.
+  - End = today.
+
 ---
 
 ## Holdings File

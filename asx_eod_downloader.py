@@ -34,6 +34,7 @@ except ImportError:
 os.environ["YF_NO_CACHE"] = "1"
 
 # ---- User settings ----
+PROMPT: bool = True  # If False, run non-interactively (use defaults as if Enter pressed)
 OUTPUT_DIR = "asx_eod_output"
 OUTPUT_CSV = "DailyData.csv"
 HOLDINGS_FILE = os.path.join(OUTPUT_DIR, "Tickers_and_Shares.txt")
@@ -119,6 +120,9 @@ def parse_date_any(s: str) -> Optional[datetime]:
 
 
 def prompt_with_default(prompt: str, default: str) -> str:
+    if not PROMPT:
+        # Non-interactive: behave as if user pressed Enter (use default)
+        return default
     s = input(f"{prompt} [{default}]: ").strip()
     return s or default
 
