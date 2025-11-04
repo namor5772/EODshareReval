@@ -118,8 +118,15 @@ def last_two_dates(rows: List[Dict[str, str]]) -> List[str]:
     return dates[-2:]
 
 
-def main() -> None:
-    rows = read_csv_rows(CSV_PATH)
+def generate_last_two_report(csv_path: str = CSV_PATH,
+                             holdings_path: str = HOLDINGS_PATH,
+                             report_path: str = REPORT_PATH,
+                             quiet: bool = False) -> Tuple[str, str]:
+    """Generate the aligned last-two-dates report.
+
+    Returns a tuple of the two dates used (oldest, newest) as strings.
+    """
+    rows = read_csv_rows(csv_path)
     if not rows:
         raise SystemExit("DailyData.csv is empty.")
 
@@ -140,7 +147,7 @@ def main() -> None:
         data[(date_s, t)] = (close, shares)
 
     # Preferred order: holdings file order; fallback to tickers seen.
-    holdings = _read_holdings(HOLDINGS_PATH)
+    holdings = _read_holdings(holdings_path)
     if holdings:
         tickers_in_order = [t for t, _ in holdings]
     else:
@@ -262,13 +269,19 @@ def main() -> None:
     lines.append(total_line)
 
     # Write file
-    os.makedirs(OUTPUT_DIR, exist_ok=True)
-    with open(REPORT_PATH, "w", encoding="utf-8") as f:
+    os.makedirs(os.path.dirname(report_path) or ".", exist_ok=True)
+    with open(report_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
 
-    # Also print where it went and which dates were used
-    print(f"Report written: {REPORT_PATH}")
-    print(f"Dates used: {d1} and {d2}")
+    if not quiet:
+        print(f"Report written: {report_path}")
+        print(f"Dates used: {d1} and {d2}")
+
+    return d1, d2
+
+
+def main() -> None:
+    generate_last_two_report()
 
 
 if __name__ == "__main__":

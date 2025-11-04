@@ -31,6 +31,12 @@ except ImportError:
     print("Missing dependencies. Please run:\n  pip install yfinance pandas")
     sys.exit(1)
 
+# Local utility to generate the aligned last-two-dates TXT report after CSV updates
+try:
+    from generate_last_two_report import generate_last_two_report
+except Exception:
+    generate_last_two_report = None  # type: ignore
+
 os.environ["YF_NO_CACHE"] = "1"
 
 # ---- User settings ----
@@ -341,6 +347,18 @@ def main():
     else:
         df.to_csv(out_path, index=False)
         print(f"\nSaved consolidated CSV: {out_path}")
+
+    # Generate the last-two-dates aligned TXT report when CSV has been touched
+    if generate_last_two_report is not None and os.path.exists(out_path):
+        try:
+            rep_path = os.path.join(OUTPUT_DIR, "Report_LastTwoDates.txt")
+            d1, d2 = generate_last_two_report(csv_path=out_path,
+                                              holdings_path=HOLDINGS_FILE,
+                                              report_path=rep_path,
+                                              quiet=True)
+            print(f"\nGenerated last-two-dates report: {rep_path} (dates: {d1}, {d2})")
+        except Exception as e:
+            print(f"\nWarning: Could not generate last-two-dates report: {e}")
 
     # ---- Summary ----
     by_ticker = df.groupby("Ticker")["Date"].agg(["min", "max", "count"]).reset_index()
