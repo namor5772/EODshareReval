@@ -1,10 +1,10 @@
 # EOD Share Revaluation / ASX End-of-Day Downloader
 
-This project downloads historical End-of-Day (EOD) price data for selected ASX tickers from Yahoo Finance using `yfinance`, applies rounding and formatting rules, and generates a consolidated CSV (`asx_eod_output/DailyData.csv`) that includes both market data and per-holding value calculations.
+This project downloads historical End-of-Day (EOD) price data for selected ASX tickers from Yahoo Finance using `yfinance`, applies rounding/formatting rules, and generates a consolidated CSV (`asx_eod_output/DailyData.csv`) that includes both market data and per‑holding value calculations. It can also auto‑produce a “last two dates” portfolio report in TXT/CSV/Excel formats.
 
 The script is designed for personal share portfolio tracking and can be run manually from the terminal. It does not require API keys.
 
-Most of this app has been designed using Open AI.
+Most of this app was designed with help from OpenAI.
 
 ---
 
@@ -29,6 +29,12 @@ Install Python dependencies:
 
 ```bash
 pip install pandas yfinance
+```
+
+Optional (for Excel report output):
+
+```bash
+pip install openpyxl  # or: pip install xlsxwriter
 ```
 
 ---
@@ -70,11 +76,56 @@ Tip: To refresh the last day and append the current day using defaults, just pre
 
 ### Non-interactive mode (PROMPT flag)
 
-- The script has a boolean flag near the top: `PROMPT: bool = True`.
-- Set `PROMPT = False` to skip prompts and use the default dates automatically (equivalent to pressing Enter for both prompts).
+- The script has a boolean flag near the top: `PROMPT: bool = False` by default.
+- When `PROMPT = False`, the script skips prompts and uses the default dates automatically (equivalent to pressing Enter for both prompts).
 - Defaults:
   - Start = last date present in `DailyData.csv` (to refresh it) if the file exists, otherwise 60 days ago.
   - End = today.
+
+To run interactively, set `PROMPT = True` near the top of `asx_eod_downloader.py`.
+
+---
+
+## Last-Two-Dates Reports
+
+After `DailyData.csv` is updated, a compact portfolio change report can be auto‑generated for the last two distinct dates found in the CSV. This is controlled by a flag near the top of `asx_eod_downloader.py`:
+
+- `AUTO_GENERATE_LAST_TWO_REPORT: bool = True` (default)
+
+Outputs are written to `asx_eod_output/` with names based on the most recent date, for example:
+
+- `asx_eod_output/Report_YYYYMMDD.txt`
+- `asx_eod_output/Report_YYYYMMDD.csv`
+- `asx_eod_output/Report_YYYYMMDD.xlsx` (requires `openpyxl` or `xlsxwriter`)
+
+Note: The `YYYYMMDD` part in the filename equals the latest date present in `DailyData.csv` used for the report (i.e., the second of the last two distinct dates).
+
+Report columns:
+
+- `Ticker` (base code without `.AX`)
+- `Close` (latest, 3 dp)
+- `+/-` (change vs prior close, 3 dp)
+- `%` (percentage change vs prior close, 2 dp)
+- `Units` (shares, with thousands separator)
+- `Value` (`Units * Close`, 2 dp)
+- `Day Gain` (`Units * (Close change)`, 2 dp)
+
+To regenerate the report manually (without running a download):
+
+```bash
+python generate_last_two_report.py
+```
+
+If Excel dependencies are missing, the TXT and CSV files are still produced.
+
+---
+
+### Example Files (from this repo)
+
+- [asx_eod_output/Report_20251104.txt](asx_eod_output/Report_20251104.txt)
+- [asx_eod_output/Report_20251104.csv](asx_eod_output/Report_20251104.csv)
+- [asx_eod_output/Report_20251104.xlsx](asx_eod_output/Report_20251104.xlsx)
+- [asx_eod_output/DailyData.csv](asx_eod_output/DailyData.csv)
 
 ---
 
@@ -105,13 +156,41 @@ Date,Ticker,Shares,Open,High,Low,Close,Volume,Value
 ```
 EODshareReval/
   asx_eod_downloader.py        # Main script
+  generate_last_two_report.py  # Creates last-two-dates TXT/CSV/Excel report
   README.md                    # This file
   asx_eod_output/
     Tickers_and_Shares.txt     # Portfolio holdings (TICKER,SHARES)
     DailyData.csv              # Generated output file
+    Report_YYYYMMDD.txt        # Last-two-dates report (latest date)
+    Report_YYYYMMDD.csv        # CSV version of the report
+    Report_YYYYMMDD.xlsx       # Excel version (optional)
 ```
 
 ---
+
+## Quick Start
+
+- Ensure Python 3.10+ is available.
+- (Optional) Create and activate a virtual environment.
+- `pip install pandas yfinance` (plus `openpyxl` or `xlsxwriter` for Excel).
+- Edit `asx_eod_output/Tickers_and_Shares.txt` with your holdings.
+- Run `python asx_eod_downloader.py`.
+
+Notes:
+- ASX tickers must include the `.AX` suffix (e.g., `BHP.AX`).
+- If the holdings file is absent, a built‑in list is used.
+
+---
+
+## Troubleshooting
+
+- Missing or delayed data: Yahoo Finance can lag or omit some EOD values temporarily. Weekends and ASX public holidays produce no rows by design. If a date looks missing, try again later or widen the date range.
+- Ticker format: Ensure tickers include the `.AX` suffix and that each line in `Tickers_and_Shares.txt` is `TICKER,SHARES` or `TICKER SHARES`. Lines starting with `#` or `//` are ignored.
+- Dates and defaults: Accepted formats are `YYYY-MM-DD`, `DD/MM/YYYY`, or `DD-MM-YYYY`. End date cannot precede start date. In non‑interactive mode (`PROMPT = False`), defaults are used automatically.
+- Refresh logic: When `DailyData.csv` exists, the last date in the file is refreshed (overwritten) and newer dates appended. To force a clean refresh for a wider period, choose an earlier start date.
+- Report not created: The last‑two‑dates report requires at least two distinct dates in `DailyData.csv`. Ensure `AUTO_GENERATE_LAST_TWO_REPORT = True` (default). TXT/CSV are always written; Excel output needs `openpyxl` or `xlsxwriter`.
+- Network/SSL hiccups: Verify internet connectivity. If you see SSL issues on some systems, updating certificates can help: `pip install --upgrade certifi`. Retry if Yahoo temporarily throttles.
+- File in use: If `DailyData.csv` is open in Excel (e.g., via OneDrive), Windows may lock the file. Close it before running the downloader.
 
 ## License
 

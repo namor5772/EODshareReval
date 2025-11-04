@@ -40,12 +40,12 @@ except Exception:
 os.environ["YF_NO_CACHE"] = "1"
 
 # ---- User settings ----
-PROMPT: bool = True  # If False, run non-interactively (use defaults as if Enter pressed)
+AUTO_GENERATE_LAST_TWO_REPORT: bool = True # Hardcoded flag: generate last-two-dates TXT/CSV/Excel report after CSV updates
+PROMPT: bool = False  # If False, run non-interactively (use defaults as if Enter pressed)
+
 OUTPUT_DIR = "asx_eod_output"
 OUTPUT_CSV = "DailyData.csv"
 HOLDINGS_FILE = os.path.join(OUTPUT_DIR, "Tickers_and_Shares.txt")
-# Hardcoded flag: generate last-two-dates TXT/CSV/Excel report after CSV updates
-AUTO_GENERATE_LAST_TWO_REPORT: bool = True
 
 def load_holdings(path: str) -> List[Tuple[str, int]]:
     """Load [Ticker, Shares] pairs from a text file.
