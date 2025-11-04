@@ -211,6 +211,8 @@ def generate_last_two_report(csv_path: str = CSV_PATH,
     # Title row (do not alter column layout below)
     title = f"Portfolio value change between {d1} and {d2}"
     lines.append(title)
+    # Blank line between title and table header
+    lines.append("")
     title = {h: h for h in headers}
     lines.append(fmt_row(title))
 

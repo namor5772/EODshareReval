@@ -1,4 +1,5 @@
 Portfolio value change between 2025-11-03 and 2025-11-04
+
 Ticker    Close     +/-        %    Units       Value    Day Gain
 ALK       1.030   0.010    0.98%  153,181  157,776.43    1,531.81
 AMP       1.750  -0.010   -0.57%   70,000  122,500.00     -700.00
