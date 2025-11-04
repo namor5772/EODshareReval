@@ -4,6 +4,8 @@ This project downloads historical End-of-Day (EOD) price data for selected ASX t
 
 The script is designed for personal share portfolio tracking and can be run manually from the terminal. It does not require API keys.
 
+Most of this app has been designed using Open AI.
+
 ---
 
 ## Features
