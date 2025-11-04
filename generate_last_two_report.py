@@ -122,6 +122,8 @@ def generate_last_two_report(csv_path: str = CSV_PATH,
                              holdings_path: str = HOLDINGS_PATH,
                              report_dir: Optional[str] = OUTPUT_DIR,
                              report_path: Optional[str] = None,
+                             emit_csv: bool = True,
+                             emit_excel: bool = True,
                              quiet: bool = False) -> Tuple[str, str, str]:
     """Generate the aligned last-two-dates report.
 
@@ -285,8 +287,77 @@ def generate_last_two_report(csv_path: str = CSV_PATH,
     with open(report_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
 
+    # Emit CSV alongside TXT
+    d2_compact = d2.replace("-", "")
+    target_dir = os.path.dirname(report_path) or report_dir or os.path.dirname(csv_path) or "."
+    csv_path_out = os.path.join(target_dir, f"Report_{d2_compact}.csv")
+    if emit_csv:
+        # Numeric-friendly CSV (no thousands separators, percent as numeric string with %)
+        headers = ["Ticker", "Close", "+/-", "%", "Units", "Value", "Day Gain"]
+        # Build numeric-ish rows: keep percent as string with '%' to match visual report
+        csv_rows: List[List[object]] = []
+        for r in report_rows:
+            # Strip formatting to numeric where applicable
+            t = r["Ticker"]
+            close = float(r["Close"]) if r["Close"] else ""
+            chg = float(r["+/-"]) if r["+/-"] else ""
+            pct = r["%"]  # keep as text with %
+            units = int(r["Units"].replace(",", "")) if r["Units"] else 0
+            val = float(r["Value"].replace(",", "")) if r["Value"] else 0.0
+            gain = float(r["Day Gain"].replace(",", "")) if r["Day Gain"] else 0.0
+            csv_rows.append([t, close, chg, pct, units, val, gain])
+        # Append TOTAL row
+        csv_rows.append(["TOTAL", "", "", "", "", round(total_value + 1e-12, 2), round(total_gain + 1e-12, 2)])
+        with open(csv_path_out, "w", encoding="utf-8", newline="") as fcsv:
+            writer = csv.writer(fcsv)
+            writer.writerow([f"Portfolio value change between {d1} and {d2}"])
+            writer.writerow([])
+            writer.writerow(headers)
+            writer.writerows(csv_rows)
+
+    # Emit Excel alongside TXT
+    xlsx_path_out = os.path.join(target_dir, f"Report_{d2_compact}.xlsx")
+    if emit_excel:
+        try:
+            import pandas as pd  # type: ignore
+            # Prepare DataFrame; keep percent as text
+            df_rows = []
+            for r in report_rows:
+                df_rows.append({
+                    "Ticker": r["Ticker"],
+                    "Close": float(r["Close"]) if r["Close"] else None,
+                    "+/-": float(r["+/-"]) if r["+/-"] else None,
+                    "%": r["%"],
+                    "Units": int(r["Units"].replace(",", "")) if r["Units"] else 0,
+                    "Value": float(r["Value"].replace(",", "")) if r["Value"] else 0.0,
+                    "Day Gain": float(r["Day Gain"].replace(",", "")) if r["Day Gain"] else 0.0,
+                })
+            # TOTAL row
+            df_rows.append({
+                "Ticker": "TOTAL", "Close": None, "+/-": None, "%": None,
+                "Units": None, "Value": round(total_value + 1e-12, 2), "Day Gain": round(total_gain + 1e-12, 2)
+            })
+            df = pd.DataFrame(df_rows, columns=["Ticker", "Close", "+/-", "%", "Units", "Value", "Day Gain"])
+            # Write with a title row and a blank line above the table
+            with pd.ExcelWriter(xlsx_path_out, engine="openpyxl") as writer:  # type: ignore
+                # Write title on a separate sheet or as first rows? We'll write on the same sheet.
+                # Using pandas is simpler if we write df directly, then openpyxl to insert title.
+                df.to_excel(writer, sheet_name="Report", index=False, startrow=2)
+                # Insert title and blank row via openpyxl
+                try:
+                    ws = writer.book["Report"]
+                    ws.cell(row=1, column=1).value = f"Portfolio value change between {d1} and {d2}"
+                except Exception:
+                    pass
+        except Exception as e:
+            if not quiet:
+                print(f"Warning: Excel file not written ({e})")
+
     if not quiet:
         print(f"Report written: {report_path}")
+        print(f"Also wrote: {csv_path_out}")
+        if emit_excel:
+            print(f"Also wrote: {xlsx_path_out}")
         print(f"Dates used: {d1} and {d2}")
 
     return d1, d2, report_path

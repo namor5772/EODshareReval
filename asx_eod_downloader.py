@@ -44,6 +44,8 @@ PROMPT: bool = True  # If False, run non-interactively (use defaults as if Enter
 OUTPUT_DIR = "asx_eod_output"
 OUTPUT_CSV = "DailyData.csv"
 HOLDINGS_FILE = os.path.join(OUTPUT_DIR, "Tickers_and_Shares.txt")
+# Hardcoded flag: generate last-two-dates TXT/CSV/Excel report after CSV updates
+AUTO_GENERATE_LAST_TWO_REPORT: bool = True
 
 def load_holdings(path: str) -> List[Tuple[str, int]]:
     """Load [Ticker, Shares] pairs from a text file.
@@ -349,14 +351,18 @@ def main():
         print(f"\nSaved consolidated CSV: {out_path}")
 
     # Generate the last-two-dates aligned TXT report when CSV has been touched
-    if generate_last_two_report is not None and os.path.exists(out_path):
+    if AUTO_GENERATE_LAST_TWO_REPORT and generate_last_two_report is not None and os.path.exists(out_path):
         try:
-            d1, d2, rep_path = generate_last_two_report(csv_path=out_path,
-                                                        holdings_path=HOLDINGS_FILE,
-                                                        report_dir=OUTPUT_DIR,
-                                                        report_path=None,
-                                                        quiet=True)
-            print(f"\nGenerated last-two-dates report: {rep_path} (dates: {d1}, {d2})")
+            d1, d2, rep_path = generate_last_two_report(
+                csv_path=out_path,
+                holdings_path=HOLDINGS_FILE,
+                report_dir=OUTPUT_DIR,
+                report_path=None,
+                emit_csv=True,
+                emit_excel=True,
+                quiet=True,
+            )
+            print(f"\nGenerated last-two-dates reports (TXT/CSV/XLSX). TXT: {rep_path} (dates: {d1}, {d2})")
         except Exception as e:
             print(f"\nWarning: Could not generate last-two-dates report: {e}")
 
