@@ -317,9 +317,11 @@ def generate_last_two_report(csv_path: str = CSV_PATH,
 
     # Emit Excel alongside TXT
     xlsx_path_out = os.path.join(target_dir, f"Report_{d2_compact}.xlsx")
+    excel_written = False
     if emit_excel:
         try:
             import pandas as pd  # type: ignore
+
             # Prepare DataFrame; keep percent as text
             df_rows = []
             for r in report_rows:
@@ -338,17 +340,74 @@ def generate_last_two_report(csv_path: str = CSV_PATH,
                 "Units": None, "Value": round(total_value + 1e-12, 2), "Day Gain": round(total_gain + 1e-12, 2)
             })
             df = pd.DataFrame(df_rows, columns=["Ticker", "Close", "+/-", "%", "Units", "Value", "Day Gain"])
-            # Write with a title row and a blank line above the table
-            with pd.ExcelWriter(xlsx_path_out, engine="openpyxl") as writer:  # type: ignore
-                # Write title on a separate sheet or as first rows? We'll write on the same sheet.
-                # Using pandas is simpler if we write df directly, then openpyxl to insert title.
-                df.to_excel(writer, sheet_name="Report", index=False, startrow=2)
-                # Insert title and blank row via openpyxl
+
+            # Choose Excel engine: prefer openpyxl, else xlsxwriter
+            engine = None
+            try:
+                import openpyxl  # type: ignore
+                engine = "openpyxl"
+            except Exception:
                 try:
-                    ws = writer.book["Report"]
-                    ws.cell(row=1, column=1).value = f"Portfolio value change between {d1} and {d2}"
+                    import xlsxwriter  # type: ignore
+                    engine = "xlsxwriter"
                 except Exception:
-                    pass
+                    engine = None
+            if engine is None:
+                raise ImportError("Neither openpyxl nor xlsxwriter is installed")
+
+            with pd.ExcelWriter(xlsx_path_out, engine=engine) as writer:  # type: ignore
+                df.to_excel(writer, sheet_name="Report", index=False, startrow=2)
+
+                if engine == "openpyxl":
+                    from openpyxl.styles import Font
+                    from openpyxl.utils import get_column_letter
+
+                    ws = writer.sheets.get("Report")
+                    if ws is None:
+                        ws = writer.book["Report"]  # type: ignore[attr-defined]
+                    # Title
+                    ws.cell(row=1, column=1).value = f"Portfolio value change between {d1} and {d2}"
+                    # Bold header
+                    header_row = 3  # 1-based (startrow=2 -> header at row 3)
+                    for cell in ws[header_row]:
+                        cell.font = Font(bold=True)
+                    # Number formats per column for all data rows (including TOTAL)
+                    first_row = header_row + 1
+                    last_row = header_row + len(df_rows)
+                    for r_idx in range(first_row, last_row + 1):
+                        ws.cell(row=r_idx, column=2).number_format = "0.000"     # Close
+                        ws.cell(row=r_idx, column=3).number_format = "0.000"     # +/-
+                        ws.cell(row=r_idx, column=5).number_format = "#,##0"     # Units
+                        ws.cell(row=r_idx, column=6).number_format = "#,##0.00"  # Value
+                        ws.cell(row=r_idx, column=7).number_format = "#,##0.00"  # Day Gain
+                    # Bold TOTAL row
+                    for cell in ws[last_row]:
+                        cell.font = Font(bold=True)
+
+                else:  # xlsxwriter
+                    ws = writer.sheets["Report"]
+                    wb = writer.book
+                    # Title
+                    ws.write(0, 0, f"Portfolio value change between {d1} and {d2}")
+                    # Formats
+                    header_fmt = wb.add_format({"bold": True})
+                    num3_fmt = wb.add_format({"num_format": "0.000"})
+                    int_fmt = wb.add_format({"num_format": "#,##0"})
+                    money_fmt = wb.add_format({"num_format": "#,##0.00"})
+                    bold_fmt = wb.add_format({"bold": True})
+                    # Header row formatting (row index 2)
+                    ws.set_row(2, None, header_fmt)
+                    # Column formats
+                    ws.set_column(1, 1, None, num3_fmt)   # Close
+                    ws.set_column(2, 2, None, num3_fmt)   # +/-
+                    ws.set_column(4, 4, None, int_fmt)    # Units
+                    ws.set_column(5, 5, None, money_fmt)  # Value
+                    ws.set_column(6, 6, None, money_fmt)  # Day Gain
+                    # Bold TOTAL row
+                    total_row_idx = 3 + len(df_rows) - 1  # zero-based row index
+                    ws.set_row(total_row_idx, None, bold_fmt)
+
+                excel_written = True
         except Exception as e:
             if not quiet:
                 print(f"Warning: Excel file not written ({e})")
@@ -356,7 +415,7 @@ def generate_last_two_report(csv_path: str = CSV_PATH,
     if not quiet:
         print(f"Report written: {report_path}")
         print(f"Also wrote: {csv_path_out}")
-        if emit_excel:
+        if emit_excel and excel_written:
             print(f"Also wrote: {xlsx_path_out}")
         print(f"Dates used: {d1} and {d2}")
 
