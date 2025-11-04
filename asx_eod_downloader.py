@@ -351,11 +351,11 @@ def main():
     # Generate the last-two-dates aligned TXT report when CSV has been touched
     if generate_last_two_report is not None and os.path.exists(out_path):
         try:
-            rep_path = os.path.join(OUTPUT_DIR, "Report_LastTwoDates.txt")
-            d1, d2 = generate_last_two_report(csv_path=out_path,
-                                              holdings_path=HOLDINGS_FILE,
-                                              report_path=rep_path,
-                                              quiet=True)
+            d1, d2, rep_path = generate_last_two_report(csv_path=out_path,
+                                                        holdings_path=HOLDINGS_FILE,
+                                                        report_dir=OUTPUT_DIR,
+                                                        report_path=None,
+                                                        quiet=True)
             print(f"\nGenerated last-two-dates report: {rep_path} (dates: {d1}, {d2})")
         except Exception as e:
             print(f"\nWarning: Could not generate last-two-dates report: {e}")

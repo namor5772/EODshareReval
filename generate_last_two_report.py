@@ -120,8 +120,9 @@ def last_two_dates(rows: List[Dict[str, str]]) -> List[str]:
 
 def generate_last_two_report(csv_path: str = CSV_PATH,
                              holdings_path: str = HOLDINGS_PATH,
-                             report_path: str = REPORT_PATH,
-                             quiet: bool = False) -> Tuple[str, str]:
+                             report_dir: Optional[str] = OUTPUT_DIR,
+                             report_path: Optional[str] = None,
+                             quiet: bool = False) -> Tuple[str, str, str]:
     """Generate the aligned last-two-dates report.
 
     Returns a tuple of the two dates used (oldest, newest) as strings.
@@ -207,6 +208,9 @@ def generate_last_two_report(csv_path: str = CSV_PATH,
 
     # Header
     lines: List[str] = []
+    # Title row (do not alter column layout below)
+    title = f"Portfolio value change between {d1} and {d2}"
+    lines.append(title)
     title = {h: h for h in headers}
     lines.append(fmt_row(title))
 
@@ -269,6 +273,12 @@ def generate_last_two_report(csv_path: str = CSV_PATH,
     lines.append(total_line)
 
     # Write file
+    # Choose the new filename format if not explicitly provided
+    if report_path is None:
+        target_dir = report_dir or os.path.dirname(csv_path) or "."
+        d2_compact = d2.replace("-", "")
+        report_path = os.path.join(target_dir, f"Report_{d2_compact}.txt")
+
     os.makedirs(os.path.dirname(report_path) or ".", exist_ok=True)
     with open(report_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
@@ -277,7 +287,7 @@ def generate_last_two_report(csv_path: str = CSV_PATH,
         print(f"Report written: {report_path}")
         print(f"Dates used: {d1} and {d2}")
 
-    return d1, d2
+    return d1, d2, report_path
 
 
 def main() -> None:
