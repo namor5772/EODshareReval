@@ -92,11 +92,11 @@ After `DailyData.csv` is updated, a compact portfolio change report can be autoâ
 
 - `AUTO_GENERATE_LAST_TWO_REPORT: bool = True` (default)
 
-Outputs are written to `asx_eod_output/` with names based on the most recent date, for example:
+Outputs are written into dedicated subfolders under `asx_eod_output/`, with names based on the most recent date, for example:
 
-- `asx_eod_output/Report_YYYYMMDD.txt`
-- `asx_eod_output/Report_YYYYMMDD.csv`
-- `asx_eod_output/Report_YYYYMMDD.xlsx` (requires `openpyxl` or `xlsxwriter`)
+- `asx_eod_output/Report_TXT/Report_YYYYMMDD.txt`
+- `asx_eod_output/Report_CSV/Report_YYYYMMDD.csv`
+- `asx_eod_output/Report_XLSX/Report_YYYYMMDD.xlsx` (requires `openpyxl` or `xlsxwriter`)
 
 Note: The `YYYYMMDD` part in the filename equals the latest date present in `DailyData.csv` used for the report (i.e., the second of the last two distinct dates).
 
@@ -122,9 +122,9 @@ If Excel dependencies are missing, the TXT and CSV files are still produced.
 
 ### Example Files (from this repo)
 
-- [asx_eod_output/Report_20251104.txt](asx_eod_output/Report_20251104.txt)
-- [asx_eod_output/Report_20251104.csv](asx_eod_output/Report_20251104.csv)
-- [asx_eod_output/Report_20251104.xlsx](asx_eod_output/Report_20251104.xlsx)
+- [asx_eod_output/Report_TXT/Report_20251104.txt](asx_eod_output/Report_TXT/Report_20251104.txt)
+- [asx_eod_output/Report_CSV/Report_20251104.csv](asx_eod_output/Report_CSV/Report_20251104.csv)
+- [asx_eod_output/Report_XLSX/Report_20251104.xlsx](asx_eod_output/Report_XLSX/Report_20251104.xlsx)
 - [asx_eod_output/DailyData.csv](asx_eod_output/DailyData.csv)
 
 ---
@@ -161,9 +161,12 @@ EODshareReval/
   asx_eod_output/
     Tickers_and_Shares.txt     # Portfolio holdings (TICKER,SHARES)
     DailyData.csv              # Generated output file
-    Report_YYYYMMDD.txt        # Last-two-dates report (latest date)
-    Report_YYYYMMDD.csv        # CSV version of the report
-    Report_YYYYMMDD.xlsx       # Excel version (optional)
+    Report_TXT/                # TXT reports
+      Report_YYYYMMDD.txt
+    Report_CSV/                # CSV reports
+      Report_YYYYMMDD.csv
+    Report_XLSX/               # Excel reports
+      Report_YYYYMMDD.xlsx
 ```
 
 ---

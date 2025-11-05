@@ -32,6 +32,11 @@ CSV_PATH = os.path.join(OUTPUT_DIR, "DailyData.csv")
 HOLDINGS_PATH = os.path.join(OUTPUT_DIR, "Tickers_and_Shares.txt")
 REPORT_PATH = os.path.join(OUTPUT_DIR, "Report_LastTwoDates.txt")
 
+# Dedicated subfolders for reports
+REPORT_TXT_DIR = os.path.join(OUTPUT_DIR, "Report_TXT")
+REPORT_CSV_DIR = os.path.join(OUTPUT_DIR, "Report_CSV")
+REPORT_XLSX_DIR = os.path.join(OUTPUT_DIR, "Report_XLSX")
+
 
 def _read_holdings(path: str) -> Optional[List[Tuple[str, int]]]:
     if not os.path.exists(path):
@@ -276,21 +281,33 @@ def generate_last_two_report(csv_path: str = CSV_PATH,
     total_line = "".join(buf).rstrip()
     lines.append(total_line)
 
-    # Write file
-    # Choose the new filename format if not explicitly provided
-    if report_path is None:
-        target_dir = report_dir or os.path.dirname(csv_path) or "."
-        d2_compact = d2.replace("-", "")
-        report_path = os.path.join(target_dir, f"Report_{d2_compact}.txt")
+    # Prepare target directories
+    base_dir = report_dir or os.path.dirname(csv_path) or OUTPUT_DIR
+    txt_dir = REPORT_TXT_DIR if base_dir == OUTPUT_DIR else os.path.join(base_dir, "Report_TXT")
+    csv_dir = REPORT_CSV_DIR if base_dir == OUTPUT_DIR else os.path.join(base_dir, "Report_CSV")
+    xlsx_dir = REPORT_XLSX_DIR if base_dir == OUTPUT_DIR else os.path.join(base_dir, "Report_XLSX")
 
-    os.makedirs(os.path.dirname(report_path) or ".", exist_ok=True)
+    # Ensure directories exist
+    os.makedirs(txt_dir, exist_ok=True)
+    if emit_csv:
+        os.makedirs(csv_dir, exist_ok=True)
+    if emit_excel:
+        os.makedirs(xlsx_dir, exist_ok=True)
+
+    # Choose the new filename format if not explicitly provided
+    d2_compact = d2.replace("-", "")
+    if report_path is None:
+        report_path = os.path.join(txt_dir, f"Report_{d2_compact}.txt")
+    else:
+        # If a custom report_path is provided, honor it for TXT only.
+        # Other formats still go to their dedicated subfolders under base_dir.
+        txt_dir = os.path.dirname(report_path) or txt_dir
+
     with open(report_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
 
-    # Emit CSV alongside TXT
-    d2_compact = d2.replace("-", "")
-    target_dir = os.path.dirname(report_path) or report_dir or os.path.dirname(csv_path) or "."
-    csv_path_out = os.path.join(target_dir, f"Report_{d2_compact}.csv")
+    # Emit CSV into dedicated folder
+    csv_path_out = os.path.join(csv_dir, f"Report_{d2_compact}.csv")
     if emit_csv:
         # Numeric-friendly CSV (no thousands separators, percent as numeric string with %)
         headers = ["Ticker", "Close", "+/-", "%", "Units", "Value", "Day Gain"]
@@ -315,8 +332,8 @@ def generate_last_two_report(csv_path: str = CSV_PATH,
             writer.writerow(headers)
             writer.writerows(csv_rows)
 
-    # Emit Excel alongside TXT
-    xlsx_path_out = os.path.join(target_dir, f"Report_{d2_compact}.xlsx")
+    # Emit Excel into dedicated folder
+    xlsx_path_out = os.path.join(xlsx_dir, f"Report_{d2_compact}.xlsx")
     excel_written = False
     if emit_excel:
         try:
