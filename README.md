@@ -38,6 +38,10 @@ Optional (for Excel report output):
 pip install openpyxl  # or: pip install xlsxwriter
 ```
 
+Optional tools:
+
+- Notepad++ (optional) to open TXT reports from the batch script; if not installed, the script falls back to Windows Notepad automatically.
+
 ---
 
 ## Usage
@@ -163,6 +167,10 @@ Date,Ticker,Shares,Open,High,Low,Close,Volume,Value
 EODshareReval/
   asx_eod_downloader.py        # Main script
   generate_last_two_report.py  # Creates last-two-dates TXT/CSV/Excel report
+  RunEODAndOpenReport.bat      # Windows: run downloader, open latest TXT report
+  CreateDesktopShortcut.ps1    # Windows: create Desktop shortcut for the batch
+  SyncLocalToOriginMain.ps1    # Windows: force local main to origin/main (with options)
+  SyncLocalToOriginMain.bat    # Windows: one-click wrapper for the sync script
   README.md                    # This file
   asx_eod_output/
     Tickers_and_Shares.txt     # Portfolio holdings (TICKER,SHARES)
@@ -183,6 +191,7 @@ EODshareReval/
 - (Optional) Create and activate a virtual environment.
 - `pip install pandas yfinance` (plus `openpyxl` or `xlsxwriter` for Excel).
 - Edit `asx_eod_output/Tickers_and_Shares.txt` with your holdings.
+- Windows: Double-click `RunEODAndOpenReport.bat` (or use the Desktop shortcut created by `CreateDesktopShortcut.ps1`) to run the downloader and automatically open the latest TXT report in Notepad++/Notepad.
 - Run `python asx_eod_downloader.py`.
 
 Notes:
@@ -206,6 +215,42 @@ Notes:
 - Report not created: The last-two-dates report requires at least two distinct dates in `DailyData.csv`. Ensure `AUTO_GENERATE_LAST_TWO_REPORT = True` (default). TXT/CSV are always written; Excel output needs `openpyxl` or `xlsxwriter`.
 - Network/SSL hiccups: Verify internet connectivity. If you see SSL issues on some systems, updating certificates can help: `pip install --upgrade certifi`. Retry if Yahoo temporarily throttles.
 - File in use: If `DailyData.csv` is open in Excel (e.g., via OneDrive), Windows may lock the file. Close it before running the downloader.
+
+---
+
+## Git: Force Local to Remote (Windows)
+
+Use the included script to make local `main` exactly match `origin/main` in one click. It safely stashes any uncommitted work first.
+
+- Double-click: `SyncLocalToOriginMain.bat`
+- Or run in terminal:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File SyncLocalToOriginMain.ps1
+```
+
+Behavior:
+- Fetches `origin` and prunes stale refs.
+- If there are uncommitted changes, stashes them as `pre-reset-YYYYMMDDHHmmss`.
+- Forces local `main` to `origin/main` via `git checkout -B main origin/main` and sets upstream tracking.
+
+Options:
+- `-Remote <name>` and `-Branch <name>` to target other remotes/branches.
+- `-NoStash` to skip stashing uncommitted changes.
+- `-Clean` to remove untracked files (`git clean -fd`). Add `-CleanIgnored` to also remove ignored files (`-x`).
+
+Examples:
+
+```powershell
+# Default: sync local main to origin/main, stash if needed
+powershell -File SyncLocalToOriginMain.ps1
+
+# Also remove untracked files after syncing
+powershell -File SyncLocalToOriginMain.ps1 -Clean
+
+# Target a different branch
+powershell -File SyncLocalToOriginMain.ps1 -Branch develop
+```
 
 ## License
 
