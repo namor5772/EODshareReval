@@ -242,8 +242,10 @@ def main():
 
     end_plus_one = end_dt + timedelta(days=1)
 
-    print(f"\nDownloading EOD for {', '.join(tickers)} "
-          f"from {start_dt.date()} to {end_dt.date()} ...")
+    requested_start = start_dt.date()
+    requested_end = end_dt.date()
+    print(f"\nRequesting EOD for {', '.join(tickers)} "
+          f"from {requested_start} to {requested_end} (inclusive)...")
 
     try:
         raw = yf.download(
@@ -276,6 +278,18 @@ def main():
             return
         print("No valid data found for selected tickers.")
         sys.exit(5)
+
+    normalized_dates = df["Date"].dt.normalize().dropna()
+    if not normalized_dates.empty:
+        actual_start = normalized_dates.min().date()
+        actual_end = normalized_dates.max().date()
+        unique_days = normalized_dates.nunique()
+        plural = "" if unique_days == 1 else "s"
+        if actual_start == actual_end:
+            range_text = f"{actual_start}"
+        else:
+            range_text = f"{actual_start} -> {actual_end}"
+        print(f"\nDownloaded EOD covering {unique_days} trading day{plural} ({range_text}).")
 
     # ---- Attach Shares ----
     df["Shares"] = df["Ticker"].map(SHARES_MAP).astype("Int64")

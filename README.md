@@ -1,6 +1,6 @@
 # EOD Share Revaluation / ASX End-of-Day Downloader
 
-This project downloads historical End-of-Day (EOD) price data for selected ASX tickers from Yahoo Finance using `yfinance`, applies rounding/formatting rules, and generates a consolidated CSV (`asx_eod_output/DailyData.csv`) that includes both market data and per‑holding value calculations. It can also auto‑produce a “last two dates” portfolio report in TXT/CSV/Excel formats.
+This project downloads historical End-of-Day (EOD) price data for selected ASX tickers from Yahoo Finance using `yfinance`, applies rounding/formatting rules, and generates a consolidated CSV (`asx_eod_output/DailyData.csv`) that includes both market data and per-holding value calculations. It can also auto-produce a "last two dates" portfolio report in TXT/CSV/Excel formats.
 
 The script is designed for personal share portfolio tracking and can be run manually from the terminal. It does not require API keys.
 
@@ -18,6 +18,7 @@ Most of this app was designed with help from OpenAI.
   - `Date, Ticker, Shares, Open, High, Low, Close, Volume, Value`
 - Saves output to: `asx_eod_output/DailyData.csv`
 - Prompts for start and end dates, with convenience defaults.
+- Console log shows both the requested download window and the actual set of trading days returned (with a count), so you immediately know when Yahoo delivers more than one day or skips holidays.
 
 Note: If `Tickers_and_Shares.txt` is missing or empty, the script falls back to its built-in holdings list and will indicate this when starting.
 
@@ -62,6 +63,11 @@ Accepted date formats:
 
 If no input is given, defaults are applied.
 
+### Console output cues
+
+- `Requesting EOD ... from <start> to <end> (inclusive)` reflects the exact range sent to Yahoo Finance after any automatic adjustments (e.g., forcing inclusion of the last CSV date).
+- `Downloaded EOD covering <n> trading day(s)` summarizes what Yahoo actually returned by showing the min/max dates present plus the trading-day count. This makes it obvious when the service provides extra days or skips holidays/weekends.
+
 ### Overwrite-Then-Append logic
 
 When `asx_eod_output/DailyData.csv` already exists:
@@ -88,7 +94,7 @@ To run interactively, set `PROMPT = True` near the top of `asx_eod_downloader.py
 
 ## Last-Two-Dates Reports
 
-After `DailyData.csv` is updated, a compact portfolio change report can be auto‑generated for the last two distinct dates found in the CSV. This is controlled by a flag near the top of `asx_eod_downloader.py`:
+After `DailyData.csv` is updated, a compact portfolio change report can be auto-generated for the last two distinct dates found in the CSV. This is controlled by a flag near the top of `asx_eod_downloader.py`:
 
 - `AUTO_GENERATE_LAST_TWO_REPORT: bool = True` (default)
 
@@ -181,7 +187,13 @@ EODshareReval/
 
 Notes:
 - ASX tickers must include the `.AX` suffix (e.g., `BHP.AX`).
-- If the holdings file is absent, a built‑in list is used.
+- If the holdings file is absent, a built-in list is used.
+
+### Windows batch helper
+
+- Run `run_eod_downloader_and_report.bat` (double-click or execute from PowerShell/CMD) for a one-step workflow that finds Python, runs the downloader, and opens the latest TXT report.
+- The batch file prefers the repo's virtual environment interpreter (`.venv\Scripts\python.exe`) and quietly falls back to `python`, `py -3`, or `py` if the venv is missing.
+- After a successful download it launches Notepad++ with `asx_eod_output\Report_TXT\Report_YYYYMMDD.txt` so you can review the latest report immediately (update the `NOTEPADPP` path in the script if Notepad++ lives elsewhere).
 
 ---
 
@@ -189,9 +201,9 @@ Notes:
 
 - Missing or delayed data: Yahoo Finance can lag or omit some EOD values temporarily. Weekends and ASX public holidays produce no rows by design. If a date looks missing, try again later or widen the date range.
 - Ticker format: Ensure tickers include the `.AX` suffix and that each line in `Tickers_and_Shares.txt` is `TICKER,SHARES` or `TICKER SHARES`. Lines starting with `#` or `//` are ignored.
-- Dates and defaults: Accepted formats are `YYYY-MM-DD`, `DD/MM/YYYY`, or `DD-MM-YYYY`. End date cannot precede start date. In non‑interactive mode (`PROMPT = False`), defaults are used automatically.
+- Dates and defaults: Accepted formats are `YYYY-MM-DD`, `DD/MM/YYYY`, or `DD-MM-YYYY`. End date cannot precede start date. In non-interactive mode (`PROMPT = False`), defaults are used automatically.
 - Refresh logic: When `DailyData.csv` exists, the last date in the file is refreshed (overwritten) and newer dates appended. To force a clean refresh for a wider period, choose an earlier start date.
-- Report not created: The last‑two‑dates report requires at least two distinct dates in `DailyData.csv`. Ensure `AUTO_GENERATE_LAST_TWO_REPORT = True` (default). TXT/CSV are always written; Excel output needs `openpyxl` or `xlsxwriter`.
+- Report not created: The last-two-dates report requires at least two distinct dates in `DailyData.csv`. Ensure `AUTO_GENERATE_LAST_TWO_REPORT = True` (default). TXT/CSV are always written; Excel output needs `openpyxl` or `xlsxwriter`.
 - Network/SSL hiccups: Verify internet connectivity. If you see SSL issues on some systems, updating certificates can help: `pip install --upgrade certifi`. Retry if Yahoo temporarily throttles.
 - File in use: If `DailyData.csv` is open in Excel (e.g., via OneDrive), Windows may lock the file. Close it before running the downloader.
 
