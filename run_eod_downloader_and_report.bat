@@ -13,7 +13,8 @@ set "PY_ARGS=%~2"
 goto :eof
 
 :main_body
-set "REPO_DIR=C:\Users\roman\OneDrive\GitHub\EODshareReval"
+for %%I in ("%~dp0.") do set "REPO_DIR=%%~fI"
+rem Use the script folder as repo root so the path matches whichever machine runs it.
 set "PREFERRED_PY=%REPO_DIR%\.venv\Scripts\python.exe"
 set "PY_CMD="
 set "PY_ARGS="
