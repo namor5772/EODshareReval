@@ -67,8 +67,16 @@ Tickers_and_Shares.txt → asx_eod_downloader.py → yfinance API → DailyData.
 
 When `DailyData.csv` exists, the script always refreshes the last date present (to handle Yahoo Finance data lag), then appends any newer dates. The default start date is the last date in the CSV; the default end date is today.
 
+## Scheduled Task
+
+A Windows Task Scheduler job named **"ASX EOD Downloader"** runs the downloader automatically:
+- **Schedule:** Monday–Friday at 5:00 PM (after ASX market close)
+- **Action:** `.venv\Scripts\python.exe asx_eod_downloader.py` (runs silently, no Notepad++)
+- **Start if missed:** Yes (catches up if the PC was off/asleep at run time)
+- **Manage via:** `taskschd.msc` or `Get-ScheduledTask -TaskName "ASX EOD Downloader"`
+
 ## Utility Scripts
 
-- `run_eod_downloader_and_report.bat` — Preferred Windows launcher (auto-finds Python from `.venv` or system)
+- `run_eod_downloader_and_report.bat` — Preferred Windows launcher (auto-finds Python from `.venv` or system, opens report in Notepad++)
 - `CreateDesktopShortcut.ps1` — Creates a Windows Desktop shortcut for the batch launcher
 - `SyncLocalToOriginMain.ps1` / `SyncLocalToOriginMain.bat` — Force-syncs local `main` to `origin/main`
