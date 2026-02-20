@@ -171,6 +171,7 @@ EODshareReval/
   generate_last_two_report.py        # Creates last-two-dates TXT/CSV/Excel report
   run_eod_downloader_and_report.bat  # Windows: preferred launcher (auto-finds Python)
   RunEODAndOpenReport.bat            # Windows: older launcher (Notepad fallback)
+  CreateScheduledTask.ps1            # Windows: create the daily 5 PM scheduled task
   CreateDesktopShortcut.ps1          # Windows: create Desktop shortcut for RunEODAndOpenReport.bat
   SyncLocalToOriginMain.ps1          # Windows: force local main to origin/main (with options)
   SyncLocalToOriginMain.bat          # Windows: one-click wrapper for the sync script
@@ -225,7 +226,12 @@ A Windows Task Scheduler job named **"ASX EOD Downloader"** runs the downloader 
 - **Schedule:** Monday–Friday at 5:00 PM
 - **Action:** `.venv\Scripts\python.exe asx_eod_downloader.py`
 - **Start if missed:** Yes — if the PC was off or asleep at 5 PM, it catches up when next available
+- **Wake to run:** Yes — wakes the PC from sleep/standby at 5 PM to run the task (does not work if the PC is fully shut down)
 - **Manage:** Open Task Scheduler (`taskschd.msc`) and look for **ASX EOD Downloader** in the root library
+- **Setup script:** To create (or recreate) the task on a new machine, run:
+  ```powershell
+  powershell -NoProfile -ExecutionPolicy Bypass -File CreateScheduledTask.ps1
+  ```
 
 ---
 

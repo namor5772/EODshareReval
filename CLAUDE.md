@@ -73,7 +73,9 @@ A Windows Task Scheduler job named **"ASX EOD Downloader"** runs the downloader 
 - **Schedule:** Monday–Friday at 5:00 PM (after ASX market close)
 - **Action:** `.venv\Scripts\python.exe asx_eod_downloader.py` (runs silently, no Notepad++)
 - **Start if missed:** Yes (catches up if the PC was off/asleep at run time)
+- **Wake to run:** Yes (wakes the PC from sleep/standby to run the task)
 - **Manage via:** `taskschd.msc` or `Get-ScheduledTask -TaskName "ASX EOD Downloader"`
+- **Setup script:** `CreateScheduledTask.ps1` — recreates the task on a fresh machine
 
 ## Utility Scripts
 
