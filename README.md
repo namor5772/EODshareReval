@@ -218,6 +218,15 @@ Both run the downloader and then open the latest TXT report. Double-click either
 powershell -NoProfile -ExecutionPolicy Bypass -File CreateDesktopShortcut.ps1
 ```
 
+### Scheduled task (automatic daily run)
+
+A Windows Task Scheduler job named **"ASX EOD Downloader"** runs the downloader silently every weekday at 5:00 PM (after ASX market close). It uses `.venv\Scripts\python.exe` directly so no Notepad++ window pops up.
+
+- **Schedule:** Monday–Friday at 5:00 PM
+- **Action:** `.venv\Scripts\python.exe asx_eod_downloader.py`
+- **Start if missed:** Yes — if the PC was off or asleep at 5 PM, it catches up when next available
+- **Manage:** Open Task Scheduler (`taskschd.msc`) and look for **ASX EOD Downloader** in the root library
+
 ---
 
 ## Troubleshooting
