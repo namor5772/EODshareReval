@@ -17,6 +17,9 @@ python asx_eod_downloader.py
 # Generate reports only (no download)
 python generate_last_two_report.py
 
+# Generate closing-price charts for all tickers
+python plot_close_charts.py
+
 # Windows one-click (finds Python, runs downloader, opens report)
 run_eod_downloader_and_report.bat
 ```
@@ -25,18 +28,20 @@ run_eod_downloader_and_report.bat
 
 Python 3.10+. Install with:
 ```bash
-pip install pandas yfinance openpyxl
+pip install pandas yfinance openpyxl matplotlib
 ```
 
 No build system, linter, or test framework is configured.
 
 ## Architecture
 
-**Two-script design:**
+**Three-script design:**
 
 1. **`asx_eod_downloader.py`** — Main entry point. Loads holdings, downloads multi-ticker data via `yfinance.download()`, normalizes the multi-index DataFrame into long-form rows, computes `Value = Shares * Close`, and applies overwrite-then-append logic on `DailyData.csv`. Automatically calls the report generator when `AUTO_GENERATE_LAST_TWO_REPORT = True`.
 
 2. **`generate_last_two_report.py`** — Reads `DailyData.csv`, finds the last two distinct dates, computes per-ticker changes, and outputs fixed-width TXT, CSV, and XLSX reports. Can run standalone or be imported (called by `asx_eod_downloader.py`).
+
+3. **`plot_close_charts.py`** — Reads `DailyData.csv` and generates a closing-price line chart (PNG) for every ticker. Charts are saved to `asx_eod_output/Charts/`. Requires `matplotlib`.
 
 **Key configuration flags** (top of `asx_eod_downloader.py`):
 - `PROMPT: bool = False` — non-interactive mode (uses defaults)
@@ -55,6 +60,7 @@ Tickers_and_Shares.txt → asx_eod_downloader.py → yfinance API → DailyData.
 - `asx_eod_output/Report_TXT/Report_YYYYMMDD.txt` — Fixed-width portfolio reports
 - `asx_eod_output/Report_CSV/Report_YYYYMMDD.csv` — CSV portfolio reports
 - `asx_eod_output/Report_XLSX/Report_YYYYMMDD.xlsx` — Excel portfolio reports
+- `asx_eod_output/Charts/TICKER_close.png` — Closing-price charts per ticker
 
 ## Formatting Conventions
 

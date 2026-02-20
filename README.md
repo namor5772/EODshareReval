@@ -32,10 +32,10 @@ Install Python dependencies:
 pip install pandas yfinance
 ```
 
-Optional (for Excel report output):
+Optional (for Excel report output and charts):
 
 ```bash
-pip install openpyxl  # or: pip install xlsxwriter
+pip install openpyxl matplotlib
 ```
 
 Optional tools:
@@ -132,6 +132,18 @@ If Excel dependencies are missing, the TXT and CSV files are still produced.
 
 ---
 
+## Closing-Price Charts
+
+To generate a closing-price line chart (PNG) for every ticker in `DailyData.csv`:
+
+```bash
+python plot_close_charts.py
+```
+
+Charts are saved to `asx_eod_output/Charts/` as `TICKER_close.png` (e.g., `BHP_close.png`). Requires `matplotlib`.
+
+---
+
 ### Example Files (from this repo)
 
 - [asx_eod_output/Report_TXT/Report_20251104.txt](asx_eod_output/Report_TXT/Report_20251104.txt)
@@ -169,6 +181,7 @@ Date,Ticker,Shares,Open,High,Low,Close,Volume,Value
 EODshareReval/
   asx_eod_downloader.py              # Main script — downloads EOD data
   generate_last_two_report.py        # Generates last-two-dates TXT/CSV/Excel report
+  plot_close_charts.py               # Generates closing-price charts for all tickers
   run_eod_downloader_and_report.bat  # Windows: preferred launcher (opens report in Notepad++)
   RunEODAndOpenReport.bat            # Windows: older launcher (Notepad fallback)
   CreateScheduledTask.ps1            # Windows: create the daily 5 PM scheduled task
@@ -188,6 +201,8 @@ EODshareReval/
       Report_YYYYMMDD.csv
     Report_XLSX/                     # Excel reports
       Report_YYYYMMDD.xlsx
+    Charts/                          # Closing-price charts
+      TICKER_close.png
 ```
 
 ---
