@@ -167,19 +167,21 @@ Date,Ticker,Shares,Open,High,Low,Close,Volume,Value
 
 ```
 EODshareReval/
-  asx_eod_downloader.py              # Main script
-  generate_last_two_report.py        # Creates last-two-dates TXT/CSV/Excel report
-  run_eod_downloader_and_report.bat  # Windows: preferred launcher (auto-finds Python)
+  asx_eod_downloader.py              # Main script — downloads EOD data
+  generate_last_two_report.py        # Generates last-two-dates TXT/CSV/Excel report
+  run_eod_downloader_and_report.bat  # Windows: preferred launcher (opens report in Notepad++)
   RunEODAndOpenReport.bat            # Windows: older launcher (Notepad fallback)
   CreateScheduledTask.ps1            # Windows: create the daily 5 PM scheduled task
-  CreateDesktopShortcut.ps1          # Windows: create Desktop shortcut for RunEODAndOpenReport.bat
+  CreateDesktopShortcut.ps1          # Windows: create Desktop shortcut
   SyncLocalToOriginMain.ps1          # Windows: force local main to origin/main (with options)
   SyncLocalToOriginMain.bat          # Windows: one-click wrapper for the sync script
+  EODshareReval.code-workspace       # VS Code workspace
   CLAUDE.md                          # Guidance for Claude Code AI assistant
   README.md                          # This file
   asx_eod_output/
     Tickers_and_Shares.txt           # Portfolio holdings (TICKER,SHARES)
-    DailyData.csv                    # Generated output file
+    DailyData.csv                    # Consolidated EOD data
+    PLgrap.xlsm                      # Excel macro workbook
     Report_TXT/                      # TXT reports
       Report_YYYYMMDD.txt
     Report_CSV/                      # CSV reports
