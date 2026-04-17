@@ -144,6 +144,18 @@ Charts are saved to `asx_eod_output/Charts/` as `TICKER_close.png` (e.g., `BHP_c
 
 ---
 
+## Total Portfolio Value Chart
+
+To generate a chart of the total daily portfolio value (sum of all holdings) over time:
+
+```bash
+python plot_portfolio_value.py
+```
+
+The chart is saved to `asx_eod_output/Charts/Portfolio_Total_Value.png`. Requires `matplotlib`.
+
+---
+
 ### Example Files (from this repo)
 
 - [asx_eod_output/Report_TXT/Report_20251104.txt](asx_eod_output/Report_TXT/Report_20251104.txt)
@@ -182,6 +194,7 @@ EODshareReval/
   asx_eod_downloader.py              # Main script — downloads EOD data
   generate_last_two_report.py        # Generates last-two-dates TXT/CSV/Excel report
   plot_close_charts.py               # Generates closing-price charts for all tickers
+  plot_portfolio_value.py            # Generates total portfolio value chart
   run_eod_downloader_and_report.bat  # Windows: preferred launcher (opens report in Notepad++)
   RunEODAndOpenReport.bat            # Windows: older launcher (Notepad fallback)
   CreateScheduledTask.ps1            # Windows: create the daily 5 PM scheduled task
