@@ -1,3 +1,5 @@
 .tmp_input.txt
 .venv/
 __pycache__/
+WSLtoken.txt
+nul
