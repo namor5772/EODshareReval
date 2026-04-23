@@ -156,11 +156,40 @@ The chart is saved to `asx_eod_output/Charts/Portfolio_Total_Value.png`. Require
 
 ---
 
+## AI Narrative Commentary
+
+To generate a short Markdown commentary on the latest daily report using Anthropic's Claude API:
+
+```bash
+python generate_narrative_report.py
+```
+
+The script reads the most recent `asx_eod_output/Report_CSV/Report_YYYYMMDD.csv` plus a trailing window of `DailyData.csv` for trend context, and writes:
+
+- `asx_eod_output/Report_Narrative/Report_YYYYMMDD_narrative.md`
+
+The commentary includes a headline, top movers by dollar impact, trend notes, and risks/watch items.
+
+Requirements:
+
+- `pip install anthropic`
+- `ANTHROPIC_API_KEY` environment variable (PowerShell: `$env:ANTHROPIC_API_KEY = "sk-ant-..."`)
+
+Model: `claude-opus-4-7` with adaptive thinking, streaming, and prompt caching on the system prompt. Token usage is printed after each run so you can confirm cache behaviour on subsequent calls.
+
+You can also pass an explicit CSV path:
+
+```bash
+python generate_narrative_report.py asx_eod_output/Report_CSV/Report_20260422.csv
+```
+
+---
+
 ### Example Files (from this repo)
 
-- [asx_eod_output/Report_TXT/Report_20251104.txt](asx_eod_output/Report_TXT/Report_20251104.txt)
-- [asx_eod_output/Report_CSV/Report_20251104.csv](asx_eod_output/Report_CSV/Report_20251104.csv)
-- [asx_eod_output/Report_XLSX/Report_20251104.xlsx](asx_eod_output/Report_XLSX/Report_20251104.xlsx)
+- [asx_eod_output/Report_TXT/Report_20260423.txt](asx_eod_output/Report_TXT/Report_20260423.txt)
+- [asx_eod_output/Report_CSV/Report_20260423.csv](asx_eod_output/Report_CSV/Report_20260423.csv)
+- [asx_eod_output/Report_XLSX/Report_20260423.xlsx](asx_eod_output/Report_XLSX/Report_20260423.xlsx)
 - [asx_eod_output/DailyData.csv](asx_eod_output/DailyData.csv)
 
 ---
@@ -195,6 +224,7 @@ EODshareReval/
   generate_last_two_report.py        # Generates last-two-dates TXT/CSV/Excel report
   plot_close_charts.py               # Generates closing-price charts for all tickers
   plot_portfolio_value.py            # Generates total portfolio value chart
+  generate_narrative_report.py       # AI narrative commentary (Anthropic Claude API)
   run_eod_downloader_and_report.bat  # Windows: preferred launcher (opens report in Notepad++)
   RunEODAndOpenReport.bat            # Windows: older launcher (Notepad fallback)
   CreateScheduledTask.ps1            # Windows: create the daily 5 PM scheduled task
@@ -216,6 +246,8 @@ EODshareReval/
       Report_YYYYMMDD.xlsx
     Charts/                          # Closing-price charts
       TICKER_close.png
+    Report_Narrative/                # AI commentary (Markdown)
+      Report_YYYYMMDD_narrative.md
 ```
 
 ---

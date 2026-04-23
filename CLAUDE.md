@@ -23,6 +23,9 @@ python plot_close_charts.py
 # Generate total portfolio value chart
 python plot_portfolio_value.py
 
+# Generate AI narrative commentary for the latest report (requires ANTHROPIC_API_KEY)
+python generate_narrative_report.py
+
 # Windows one-click (finds Python, runs downloader, opens report)
 run_eod_downloader_and_report.bat
 ```
@@ -34,11 +37,16 @@ Python 3.10+. Install with:
 pip install pandas yfinance openpyxl matplotlib
 ```
 
+Optional (for AI narrative commentary):
+```bash
+pip install anthropic
+```
+
 No build system, linter, or test framework is configured.
 
 ## Architecture
 
-**Four-script design:**
+**Five-script design:**
 
 1. **`asx_eod_downloader.py`** — Main entry point. Loads holdings, downloads multi-ticker data via `yfinance.download()`, normalizes the multi-index DataFrame into long-form rows, computes `Value = Shares * Close`, and applies overwrite-then-append logic on `DailyData.csv`. Automatically calls the report generator when `AUTO_GENERATE_LAST_TWO_REPORT = True`.
 
@@ -47,6 +55,8 @@ No build system, linter, or test framework is configured.
 3. **`plot_close_charts.py`** — Reads `DailyData.csv` and generates a closing-price line chart (PNG) for every ticker. Charts are saved to `asx_eod_output/Charts/`. Requires `matplotlib`.
 
 4. **`plot_portfolio_value.py`** — Reads `DailyData.csv`, sums the Value column across all tickers per date, and generates a total portfolio value chart (PNG) saved to `asx_eod_output/Charts/Portfolio_Total_Value.png`. Requires `matplotlib`.
+
+5. **`generate_narrative_report.py`** — Reads the latest `Report_CSV/Report_YYYYMMDD.csv` plus a trailing window of `DailyData.csv`, sends them to Claude (`claude-opus-4-7` via the `anthropic` SDK), and writes a Markdown commentary to `asx_eod_output/Report_Narrative/Report_YYYYMMDD_narrative.md`. Uses adaptive thinking, streams the response, and caches the stable system prompt. Requires `anthropic` and the `ANTHROPIC_API_KEY` environment variable.
 
 **Key configuration flags** (top of `asx_eod_downloader.py`):
 - `PROMPT: bool = False` — non-interactive mode (uses defaults)
@@ -67,6 +77,7 @@ Tickers_and_Shares.txt → asx_eod_downloader.py → yfinance API → DailyData.
 - `asx_eod_output/Report_XLSX/Report_YYYYMMDD.xlsx` — Excel portfolio reports
 - `asx_eod_output/Charts/TICKER_close.png` — Closing-price charts per ticker
 - `asx_eod_output/Charts/Portfolio_Total_Value.png` — Total daily portfolio value chart
+- `asx_eod_output/Report_Narrative/Report_YYYYMMDD_narrative.md` — AI-generated portfolio commentary
 
 ## Formatting Conventions
 
