@@ -175,7 +175,7 @@ Requirements:
 - `pip install anthropic`
 - `ANTHROPIC_API_KEY` environment variable (PowerShell: `$env:ANTHROPIC_API_KEY = "sk-ant-..."`)
 
-Model: `claude-opus-4-7` with adaptive thinking, streaming, and prompt caching on the system prompt. Token usage is printed after each run so you can confirm cache behaviour on subsequent calls.
+Model: `claude-opus-4-7` with adaptive thinking at `effort: "medium"` and streaming output. Token usage and an estimated USD cost are printed after each run — typically ~$0.035 per report at current Opus 4.7 pricing ($5 / 1M input tokens, $25 / 1M output tokens).
 
 You can also pass an explicit CSV path:
 

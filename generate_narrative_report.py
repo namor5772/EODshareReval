@@ -28,8 +28,11 @@ REPORT_CSV_DIR = os.path.join(OUTPUT_DIR, "Report_CSV")
 NARRATIVE_DIR = os.path.join(OUTPUT_DIR, "Report_Narrative")
 
 MODEL = "claude-opus-4-7"
+# Opus 4.7 pricing, USD per 1M tokens. Update if MODEL changes.
+INPUT_PRICE_PER_MTOK = 5.00
+OUTPUT_PRICE_PER_MTOK = 25.00
 TREND_WINDOW_DAYS = 10  # Trailing distinct trading days included as trend context
-MAX_TOKENS = 16000
+MAX_TOKENS = 4000
 
 SYSTEM_PROMPT = """You are a concise Australian equities portfolio commentator.
 
@@ -155,17 +158,12 @@ def _call_claude(report_csv_text: str, trend_text: str, report_date: str) -> str
         f"{trend_text}\n"
     )
 
-    # Prompt caching: the system prompt is stable across runs, so mark it cacheable.
-    # The user content varies per day and stays outside the cache breakpoint.
     with client.messages.stream(
         model=MODEL,
         max_tokens=MAX_TOKENS,
         thinking={"type": "adaptive"},
-        system=[{
-            "type": "text",
-            "text": SYSTEM_PROMPT,
-            "cache_control": {"type": "ephemeral"},
-        }],
+        output_config={"effort": "medium"},
+        system=SYSTEM_PROMPT,
         messages=[{"role": "user", "content": user_content}],
     ) as stream:
         for text in stream.text_stream:
@@ -174,12 +172,13 @@ def _call_claude(report_csv_text: str, trend_text: str, report_date: str) -> str
 
     print()  # newline after streamed output
 
-    # Surface cache telemetry so the user can verify caching is working on subsequent runs.
     usage = final.usage
-    print(f"[usage] input={usage.input_tokens} "
-          f"cache_write={getattr(usage, 'cache_creation_input_tokens', 0)} "
-          f"cache_read={getattr(usage, 'cache_read_input_tokens', 0)} "
-          f"output={usage.output_tokens}")
+    input_cost = usage.input_tokens / 1_000_000 * INPUT_PRICE_PER_MTOK
+    output_cost = usage.output_tokens / 1_000_000 * OUTPUT_PRICE_PER_MTOK
+    total_cost = input_cost + output_cost
+    print(f"[usage] input={usage.input_tokens} output={usage.output_tokens}")
+    print(f"[cost]  input=${input_cost:.4f}  output=${output_cost:.4f}  "
+          f"total=${total_cost:.4f} USD")
 
     return "".join(block.text for block in final.content if block.type == "text")
 

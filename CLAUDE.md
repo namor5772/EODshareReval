@@ -56,7 +56,7 @@ No build system, linter, or test framework is configured.
 
 4. **`plot_portfolio_value.py`** — Reads `DailyData.csv`, sums the Value column across all tickers per date, and generates a total portfolio value chart (PNG) saved to `asx_eod_output/Charts/Portfolio_Total_Value.png`. Requires `matplotlib`.
 
-5. **`generate_narrative_report.py`** — Reads the latest `Report_CSV/Report_YYYYMMDD.csv` plus a trailing window of `DailyData.csv`, sends them to Claude (`claude-opus-4-7` via the `anthropic` SDK), and writes a Markdown commentary to `asx_eod_output/Report_Narrative/Report_YYYYMMDD_narrative.md`. Uses adaptive thinking, streams the response, and caches the stable system prompt. Requires `anthropic` and the `ANTHROPIC_API_KEY` environment variable.
+5. **`generate_narrative_report.py`** — Reads the latest `Report_CSV/Report_YYYYMMDD.csv` plus a trailing window of `DailyData.csv`, sends them to Claude (`claude-opus-4-7` via the `anthropic` SDK), and writes a Markdown commentary to `asx_eod_output/Report_Narrative/Report_YYYYMMDD_narrative.md`. Uses adaptive thinking with `effort: "medium"` and streams the response. Prints token usage and estimated USD cost after each run. Requires `anthropic` and the `ANTHROPIC_API_KEY` environment variable.
 
 **Key configuration flags** (top of `asx_eod_downloader.py`):
 - `PROMPT: bool = False` — non-interactive mode (uses defaults)
