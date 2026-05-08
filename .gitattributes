@@ -1,0 +1,11 @@
+# Treat these formats as binary so Git's autocrlf never corrupts them on checkout.
+*.pdf   binary
+*.xlsx  binary
+*.xlsm  binary
+*.xls   binary
+*.png   binary
+*.ico   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.zip   binary
