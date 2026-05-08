@@ -4,3 +4,39 @@ __pycache__/
 WSLtoken.txt
 nul
 .claude/
+
+# --- Credential & secret protection ---
+# Block common credential filename patterns so they cannot be accidentally
+# committed via `git add` / `git add -A`. If you ever genuinely need to track
+# one of these, add an explicit `!path/to/file` exception.
+.env
+.env.*
+*.env
+*.key
+*.pem
+*.pfx
+*.p12
+*.crt
+*.cer
+*.token
+credentials.json
+secrets.json
+auth.json
+service-account*.json
+id_rsa
+id_rsa.*
+id_dsa
+id_dsa.*
+id_ecdsa
+id_ecdsa.*
+id_ed25519
+id_ed25519.*
+.aws/
+.ssh/
+
+# --- Tooling caches & local-only artefacts ---
+.idea/
+.vscode/
+*.bak
+*.old
+Thumbs.db
