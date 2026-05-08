@@ -103,5 +103,8 @@ A Windows Task Scheduler job named **"ASX EOD Downloader"** runs the downloader 
 ## Utility Scripts
 
 - `run_eod_downloader_and_report.bat` — Preferred Windows launcher (auto-finds Python from `.venv` or system, opens report in Notepad++)
-- `CreateDesktopShortcut.ps1` — Creates a Windows Desktop shortcut for the batch launcher
+- `run_eod_hidden.vbs` — Silent wrapper that spawns the `.bat` with `WindowStyle=0` (no cmd window flashes). Targeted by the Desktop shortcut.
+- `CreateDesktopShortcut.ps1` — Creates a Windows Desktop shortcut that runs the silent VBS launcher with the custom icon.
+- `GenerateShortcutIcon.ps1` — Regenerates `eod_icon.ico` (256x256 PNG-embedded ICO) used by the Desktop shortcut.
+- `eod_icon.ico` — Custom stock-chart icon for the Desktop shortcut (committed binary; regenerate via `GenerateShortcutIcon.ps1`).
 - `SyncLocalToOriginMain.ps1` / `SyncLocalToOriginMain.bat` — Force-syncs local `main` to `origin/main`
