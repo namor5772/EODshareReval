@@ -132,7 +132,7 @@ def _build_trend_context(daily_csv: str, window: int = TREND_WINDOW_DAYS) -> str
     return "\n".join(lines)
 
 
-def _call_claude(report_csv_text: str, trend_text: str, report_date: str) -> str:
+def _call_claude(report_csv_text: str, trend_text: str, report_date: str) -> Tuple[str, dict]:
     try:
         import anthropic
     except ImportError:
@@ -180,7 +180,57 @@ def _call_claude(report_csv_text: str, trend_text: str, report_date: str) -> str
     print(f"[cost]  input=${input_cost:.4f}  output=${output_cost:.4f}  "
           f"total=${total_cost:.4f} USD")
 
-    return "".join(block.text for block in final.content if block.type == "text")
+    text = "".join(block.text for block in final.content if block.type == "text")
+    info = {
+        "input_tokens": usage.input_tokens,
+        "output_tokens": usage.output_tokens,
+        "input_cost": input_cost,
+        "output_cost": output_cost,
+        "total_cost": total_cost,
+    }
+    return text, info
+
+
+def _write_pdf(markdown_text: str, out_path: str) -> bool:
+    """Render a markdown document to a styled PDF. Returns True on success."""
+    try:
+        import markdown as md_lib
+        from xhtml2pdf import pisa
+    except ImportError as e:
+        print(f"[warn] PDF generation skipped: {e.name} not installed. "
+              f"Run: .venv\\Scripts\\python.exe -m pip install markdown xhtml2pdf",
+              file=sys.stderr)
+        return False
+
+    html_body = md_lib.markdown(markdown_text, extensions=["extra", "sane_lists"])
+
+    html = (
+        "<!DOCTYPE html><html><head><meta charset='utf-8'><style>"
+        "@page { size: A4; margin: 2cm; }"
+        "body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt;"
+        "       color: #222; line-height: 1.45; }"
+        "h1 { font-size: 18pt; color: #111; margin-top: 0;"
+        "     border-bottom: 1px solid #ccc; padding-bottom: 4pt; }"
+        "h2 { font-size: 13pt; color: #234; margin-top: 14pt; margin-bottom: 4pt; }"
+        "p, li { margin: 4pt 0; }"
+        "ul { padding-left: 20pt; }"
+        "code { font-family: 'Courier New', monospace; font-size: 9pt;"
+        "       background: #f4f4f4; padding: 1pt 3pt; }"
+        "em { color: #555; }"
+        "strong { color: #000; }"
+        "hr { border: none; border-top: 1px solid #ccc; margin: 10pt 0; }"
+        "</style></head><body>"
+        f"{html_body}"
+        "</body></html>"
+    )
+
+    with open(out_path, "wb") as f:
+        result = pisa.CreatePDF(html, dest=f)
+    if result.err:
+        print(f"[warn] PDF render reported {result.err} error(s); file may be incomplete.",
+              file=sys.stderr)
+        return False
+    return True
 
 
 def generate_narrative_report(report_csv_path: Optional[str] = None,
@@ -198,25 +248,38 @@ def generate_narrative_report(report_csv_path: Optional[str] = None,
     report_text = _read_text(report_csv_path)
     trend_text = _build_trend_context(daily_csv_path)
 
-    narrative = _call_claude(report_text, trend_text, report_date)
+    narrative, info = _call_claude(report_text, trend_text, report_date)
 
     os.makedirs(output_dir, exist_ok=True)
-    out_path = os.path.join(output_dir, f"Report_{report_date}_narrative.md")
+    md_path = os.path.join(output_dir, f"Report_{report_date}_narrative.md")
+    pdf_path = os.path.splitext(md_path)[0] + ".pdf"
 
     header = (
         f"# Portfolio Commentary - {report_date}\n\n"
         f"_Source: `{os.path.relpath(report_csv_path)}`_  \n"
-        f"_Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} by {MODEL}_\n\n"
+        f"_Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} by {MODEL}_  \n"
+        f"_Cost: **${info['total_cost']:.4f} USD** "
+        f"(input {info['input_tokens']} tok = ${info['input_cost']:.4f}; "
+        f"output {info['output_tokens']} tok = ${info['output_cost']:.4f})_\n\n"
         f"---\n\n"
     )
-    with open(out_path, "w", encoding="utf-8") as f:
-        f.write(header + narrative.strip() + "\n")
+    full_text = header + narrative.strip() + "\n"
 
-    print(f"\nNarrative written: {out_path}")
-    return out_path
+    with open(md_path, "w", encoding="utf-8") as f:
+        f.write(full_text)
+    print(f"\nNarrative (MD) written: {md_path}")
+
+    if _write_pdf(full_text, pdf_path):
+        print(f"Narrative (PDF) written: {pdf_path}")
+        return pdf_path
+    return md_path
 
 
 def main() -> None:
+    # Windows consoles default to cp1252, which crashes when Claude streams characters
+    # like em-dashes or arrows. Force UTF-8 with replacement fallback so streaming never errors.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     path = sys.argv[1] if len(sys.argv) > 1 else None
     generate_narrative_report(report_csv_path=path)
 
