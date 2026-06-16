@@ -3,8 +3,16 @@
     Creates (or replaces) the "ASX EOD Downloader" Windows scheduled task.
 
 .DESCRIPTION
-    Registers a Task Scheduler job that silently runs the EOD downloader
-    every weekday at 5:00 PM using the project's .venv Python.
+    Registers a Task Scheduler job that does EXACTLY what the
+    "Run EOD + Open Report" desktop shortcut does: it launches
+    run_eod_hidden.vbs via wscript.exe, which silently runs
+    run_eod_downloader_and_report.bat (download EOD data + generate
+    reports) and then opens the latest TXT report in Notepad++.
+
+    Because the job opens a GUI window (Notepad++), it runs under an
+    INTERACTIVE principal and ONLY when the user is logged on -- a task
+    set to "run whether logged on or not" would launch Notepad++ in the
+    invisible Session 0 instead of on your desktop.
 
     Settings:
       - Monday-Friday at 5:00 PM
@@ -18,30 +26,38 @@
 
 $ErrorActionPreference = 'Stop'
 
-$repoDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
-$pythonExe = Join-Path $repoDir '.venv\Scripts\python.exe'
-$script = Join-Path $repoDir 'asx_eod_downloader.py'
-$taskName = 'ASX EOD Downloader'
+$repoDir   = Split-Path -Parent $MyInvocation.MyCommand.Definition
+$vbs       = Join-Path $repoDir 'run_eod_hidden.vbs'
+$bat       = Join-Path $repoDir 'run_eod_downloader_and_report.bat'
+$wscript   = Join-Path $env:SystemRoot 'System32\wscript.exe'
+$taskName  = 'ASX EOD Downloader'
 
-if (-not (Test-Path $pythonExe)) {
-    Write-Host "ERROR: .venv not found at $pythonExe" -ForegroundColor Red
-    Write-Host "Create it first:  py -m venv .venv && .venv\Scripts\pip install pandas yfinance openpyxl"
+if (-not (Test-Path $vbs)) {
+    Write-Host "ERROR: VBS launcher not found at $vbs" -ForegroundColor Red
+    exit 1
+}
+if (-not (Test-Path $bat)) {
+    Write-Host "ERROR: Batch launcher not found at $bat" -ForegroundColor Red
     exit 1
 }
 
-$action   = New-ScheduledTaskAction -Execute $pythonExe -Argument $script -WorkingDirectory $repoDir
-$trigger  = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday,Tuesday,Wednesday,Thursday,Friday -At 5:00PM
-$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -WakeToRun
+# Action mirrors the desktop shortcut exactly: wscript.exe "<repo>\run_eod_hidden.vbs"
+$action    = New-ScheduledTaskAction -Execute $wscript -Argument ('"' + $vbs + '"') -WorkingDirectory $repoDir
+$trigger   = New-ScheduledTaskTrigger -Weekly -DaysOfWeek Monday,Tuesday,Wednesday,Thursday,Friday -At 5:00PM
+$settings  = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -WakeToRun
+# Interactive principal so Notepad++ opens on the user's desktop (runs only when logged on).
+$principal = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType Interactive -RunLevel Limited
 
-Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $settings `
-    -Description 'Downloads ASX EOD data and generates portfolio reports after market close' -Force
+Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $settings -Principal $principal `
+    -Description 'Runs the EOD downloader + report (same as the "Run EOD + Open Report" shortcut) after market close' -Force
 
 Write-Host ""
 Write-Host "Scheduled task '$taskName' created successfully." -ForegroundColor Green
-Write-Host "  Schedule:       Mon-Fri at 5:00 PM"
-Write-Host "  Python:         $pythonExe"
-Write-Host "  Script:         $script"
-Write-Host "  Wake to run:    Yes"
+Write-Host "  Schedule:        Mon-Fri at 5:00 PM"
+Write-Host "  Action:          $wscript ""$vbs"""
+Write-Host "  Behaviour:       Same as the 'Run EOD + Open Report' shortcut (downloads, reports, opens Notepad++)"
+Write-Host "  Runs:            Only when you are logged on (interactive, so Notepad++ is visible)"
+Write-Host "  Wake to run:     Yes"
 Write-Host "  Start if missed: Yes"
 Write-Host ""
 Write-Host "Manage via: taskschd.msc or Get-ScheduledTask -TaskName '$taskName'"

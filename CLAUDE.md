@@ -92,13 +92,14 @@ When `DailyData.csv` exists, the script always refreshes the last date present (
 
 ## Scheduled Task
 
-A Windows Task Scheduler job named **"ASX EOD Downloader"** runs the downloader automatically:
+A Windows Task Scheduler job named **"ASX EOD Downloader"** runs automatically:
 - **Schedule:** Monday–Friday at 5:00 PM (after ASX market close)
-- **Action:** `.venv\Scripts\python.exe asx_eod_downloader.py` (runs silently, no Notepad++)
+- **Action:** `wscript.exe "run_eod_hidden.vbs"` — does exactly what the **"Run EOD + Open Report"** desktop shortcut does (downloads EOD data, generates reports, then opens the latest TXT report in Notepad++)
+- **Runs as:** interactive principal, **only when the user is logged on** (so Notepad++ opens on the visible desktop rather than the invisible Session 0)
 - **Start if missed:** Yes (catches up if the PC was off/asleep at run time)
 - **Wake to run:** Yes (wakes the PC from sleep/standby to run the task)
 - **Manage via:** `taskschd.msc` or `Get-ScheduledTask -TaskName "ASX EOD Downloader"`
-- **Setup script:** `CreateScheduledTask.ps1` — recreates the task on a fresh machine
+- **Setup script:** `CreateScheduledTask.ps1` — recreates the task on a fresh machine (does not require an elevated shell)
 
 ## Utility Scripts
 
