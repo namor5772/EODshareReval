@@ -94,7 +94,7 @@ When `DailyData.csv` exists, the script always refreshes the last date present (
 
 A Windows Task Scheduler job named **"ASX EOD Downloader"** runs automatically:
 - **Schedule:** Monday–Friday at 5:00 PM (after ASX market close)
-- **Action:** `wscript.exe "run_eod_hidden.vbs"` — does exactly what the **"Run EOD + Open Report"** desktop shortcut does (downloads EOD data, generates reports, then opens the latest TXT report in Notepad++)
+- **Action:** `wscript.exe "run_eod_hidden.vbs"` — does exactly what the **"Run EOD + Open Report"** desktop shortcut does (downloads EOD data, generates reports, auto-commits and pushes `asx_eod_output/` to GitHub, then opens the latest TXT report in Notepad++)
 - **Runs as:** interactive principal, **only when the user is logged on** (so Notepad++ opens on the visible desktop rather than the invisible Session 0)
 - **Start if missed:** Yes (catches up if the PC was off/asleep at run time)
 - **Wake to run:** Yes (wakes the PC from sleep/standby to run the task)
@@ -103,7 +103,7 @@ A Windows Task Scheduler job named **"ASX EOD Downloader"** runs automatically:
 
 ## Utility Scripts
 
-- `run_eod_downloader_and_report.bat` — Preferred Windows launcher (auto-finds Python from `.venv` or system, opens report in Notepad++)
+- `run_eod_downloader_and_report.bat` — Preferred Windows launcher (auto-finds Python from `.venv` or system, auto-commits and pushes `asx_eod_output/` to GitHub, opens report in Notepad++). The git step only runs on `main`, stages nothing outside `asx_eod_output/`, and skips cleanly (no `pause`) if git is missing or nothing changed.
 - `run_eod_hidden.vbs` — Silent wrapper that spawns the `.bat` with `WindowStyle=0` (no cmd window flashes). Targeted by the Desktop shortcut.
 - `CreateDesktopShortcut.ps1` — Creates a Windows Desktop shortcut that runs the silent VBS launcher with the custom icon.
 - `GenerateShortcutIcon.ps1` — Regenerates `eod_icon.ico` (256x256 PNG-embedded ICO) used by the Desktop shortcut.

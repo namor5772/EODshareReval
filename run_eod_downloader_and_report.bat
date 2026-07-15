@@ -55,8 +55,10 @@ if not "%EXITCODE%"=="0" (
 
 set "REPORT_DIR=%REPO_DIR%\asx_eod_output\Report_TXT"
 set "LATEST_REPORT="
+set "LATEST_STAMP="
 for /f "delims=" %%F in ('dir /b /a:-d /o:-d "%REPORT_DIR%\Report_*.txt" 2^>nul') do (
     set "LATEST_REPORT=%REPORT_DIR%\%%F"
+    set "LATEST_STAMP=%%~nF"
     goto :reports_found
 )
 
@@ -67,6 +69,40 @@ if not defined LATEST_REPORT (
     exit /b 1
 )
 
+rem Auto-commit and push the refreshed data + reports so each day lands in git.
+rem No pause lines in this block: it also runs hidden via run_eod_hidden.vbs and
+rem a pause would leave an invisible cmd.exe waiting forever. Any failure just
+rem skips ahead so the report still opens; an unpushed commit rides along with
+rem the next successful push.
+set "REPORT_DATE=%LATEST_STAMP:Report_=%"
+set "REPORT_DATE=%REPORT_DATE:~0,4%-%REPORT_DATE:~4,2%-%REPORT_DATE:~6,2%"
+
+where git >nul 2>&1
+if errorlevel 1 (
+    echo git not found on PATH; skipping auto-commit.
+    goto :open_report
+)
+
+pushd "%REPO_DIR%"
+set "BRANCH="
+for /f "delims=" %%B in ('git rev-parse --abbrev-ref HEAD 2^>nul') do set "BRANCH=%%B"
+if /i not "%BRANCH%"=="main" (
+    echo Not on main branch; skipping auto-commit.
+    popd
+    goto :open_report
+)
+
+git add asx_eod_output/
+git diff --cached --quiet
+if errorlevel 1 (
+    git commit -m "Daily EOD data and reports for %REPORT_DATE%"
+) else (
+    echo No changes in asx_eod_output to commit.
+)
+git push origin main
+popd
+
+:open_report
 set "NOTEPADPP=C:\Program Files\Notepad++\notepad++.exe"
 if not exist "%NOTEPADPP%" (
     set "NOTEPADPP=C:\Program Files (x86)\Notepad++\notepad++.exe"

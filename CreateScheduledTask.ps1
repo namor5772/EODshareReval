@@ -49,7 +49,7 @@ $settings  = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGo
 $principal = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType Interactive -RunLevel Limited
 
 Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $settings -Principal $principal `
-    -Description 'Runs the EOD downloader + report (same as the "Run EOD + Open Report" shortcut) after market close' -Force
+    -Description 'Runs the EOD downloader + report and auto-commits the results to GitHub (same as the "Run EOD + Open Report" shortcut) after market close' -Force
 
 Write-Host ""
 Write-Host "Scheduled task '$taskName' created successfully." -ForegroundColor Green
