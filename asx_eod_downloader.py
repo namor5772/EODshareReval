@@ -94,7 +94,7 @@ TICKERS_AND_SHARES: List[Tuple[str, int]] = [
     ["CAN.AX", 44090],
     ["CBA.AX", 0],
     ["CNB.AX", 10000],
-    ["CSL.AX", 3450],
+    ["CSL.AX", 4000],
     ["E25.AX", 20000],
     ["ERA.AX", 700000],
     ["PTR.AX", 9412],  
