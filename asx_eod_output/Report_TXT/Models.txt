@@ -1,0 +1,53 @@
+Anthropic claude-sonnet-5 mode=High
+OpenAI    gpt-5.6-terra reasoning=High, verbosity=medium
+Google    gemini-3.7-flash thinking=high, temp=0
+xAI       grok-4.6 reasoning=High, temp=0
+Moonshot  kimi-k3 reasoning=High
+
+Weather_Agent_Skill_based
+
+ Call #24  
+Agent:
+Completed all **5 headless `MyAgent.py` runs sequentially**, using the unchanged `Weather_Agent_Skill_based` instruction.
+
+| # | Provider / Model | API parameters logged | Cost | Time | Calls |
+|---:|---|---|---:|---:|---:|
+| 1 | Anthropic `claude-sonnet-5` | `mode=High` | **0.3565** | **136 sec** | **16** |
+| 2 | OpenAI `gpt-5.6-terra` | `reasoning=High, verbosity=medium` | **0.1043** | **55 sec** | **8** |
+| 3 | Google `gemini-3.7-flash` | `thinking=high, temp=0` | **0.1027** | **103 sec** | **19** |
+| 4 | xAI `grok-4.6` | `reasoning=High, temp=0` | **0.2588** | **175 sec** | **11** |
+| 5 | Moonshot `kimi-k3` | `reasoning=High` | **0.1538** | **142 sec** | **10** |
+| **Total** | | | **0.9761** | **611 sec (10m 11s)** | **64** |
+
+### Comparison
+
+- **Lowest cost:** Google Gemini — **0.1027**
+- **Fastest:** OpenAI — **55 seconds**
+- **Fewest calls:** OpenAI — **8 calls**
+- **Highest cost:** Anthropic — **0.3565**
+- **Longest runtime:** xAI — **175 seconds**
+- **Most calls:** Google — **19 calls**
+
+All five runs completed successfully and sent their respective weather-report emails. The saved instruction was restored afterward to its original **Anthropic `claude-sonnet-5`, High** configuration.
+  $0.0386 this call  |  $0.58 total  (in:379  out:668  cache_read:33,240)
+Logged API cost to C:\Users\grobl\OneDrive\MyAppShare\APICostLog_LenovoAug23.txt: 2026-08-18 21:22:22;OpenAI;gpt-5.6-sol;0.5770;reasoning=High, verbosity=medium;868;Model_Comparison;24
+
+
+
+*** Model_Comparison ***
+Trash all numbered emails only from all accounts and even if they are in Spam, EXCEPT for any SPECIFYING LIST EMAILS and email 6.Do NOT mark the latter as read.
+
+I would like you to headlessly run (using MyAgent.py) the Weather_Agent_Skill_based Instruction 5 times one after another (NOT in parallel) with different models. Every other detail being unchenged. In Particular:
+1. Anthropic claude-sonnet-5 mode=Medium
+2. OpenAI    gpt-5.6-terra reasoning=Medium, verbosity=medium
+3. Google    gemini-3.7-flash thinking=Medium, temp=0
+4. xAI       grok-4.6 reasoning=Medium, temp=0
+5. Moonshot  kimi-k3 reasoning=Low
+
+{report}=List the corresponding COST, TIME and CALLS (as per the API Cost log), so that I can compare the models.
+
+Compose and then send email:
+From: roman1@gmail.com
+To: namor5772@gmail.com
+Subject: Model Comparison
+Body: {report}
