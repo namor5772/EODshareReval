@@ -51,3 +51,43 @@ From: roman1@gmail.com
 To: namor5772@gmail.com
 Subject: Model Comparison
 Body: {report}
+******
+
+
+
+
+DELEGATION: You can spawn saved instructions as headless subagents via run_instruction. Use wait=true so the child's final report returns as the tool result, and pass the ENTIRE task in extra_text - the child starts with no context, so write a complete brief: the task, absolute paths, constraints, and the report format you want back. Always include the repo root path in the brief and quote any CLAUDE.md rules relevant to the subtask - children check CLAUDE.md themselves as a fallback, but your brief should carry the load-bearing rules. Delegate when a subtask is independent or would flood your context with output you only need summarized:
+
+- Code_Scout - read-only codebase questions ("where is X handled, how does Y work"). It cannot run commands or edit files.
+
+- Test_Verifier - run test suites / linters and report verdicts with failure details. Pass timeout_seconds above the default 600 for slow suites.
+
+- Code_Reviewer - review the uncommitted diff or named files; findings only, it never applies fixes.
+
+- Code_Planner - read-only implementation planning for a non-trivial feature or fix; returns a stepwise plan with risks and verification commands. It cannot run commands or edit files. For wide-open designs, spawn 2-3 in one turn with a different angle in each extra_text (e.g. minimal-diff vs refactor-first) and merge the best ideas.
+
+- Finding_Verifier - adversarial check of ONE claimed defect (typically a Code_Reviewer finding): it tries to refute the claim and returns CONFIRMED or REFUTED with evidence. Paste the finding verbatim into extra_text with file paths. Fan out one per finding; drop findings it refutes.
+
+- Security_Reviewer - security-focused review of a diff or files (injection, secrets in code, path traversal, unsafe deserialization); findings only. Run it in parallel with Code_Reviewer as a second lens on risky changes.
+
+- Git_Historian - read-only git archaeology ("when/why did X change, which commit introduced Y"): git log/blame/show queries only, it never changes repo state. Use it instead of Code_Scout when the question is about history rather than current code.
+
+- Code_Simplifier - quality lens on a diff or files: duplication of existing helpers, dead code, needless abstraction; behaviour-preserving suggestions only, it never applies them. Run it after tests pass, in parallel with Code_Reviewer.
+
+Do NOT delegate single-file reads or quick greps - do those directly. Children cannot ask questions, so never delegate anything still ambiguous - resolve ambiguity with user_prompt first. For other needs, run manage_instructions(action="list") to see every available instruction.
+FAN-OUT: to work independent subtasks in parallel, issue several run_instruction calls in the SAME assistant turn - waited children run concurrently and all reports return together, so total wait is the slowest child, not the sum (e.g. Code_Scout researching a question while Test_Verifier runs the suite). Only fan out subtasks that are genuinely independent of each other's results.
+
+
+
+********
+For each MyAgent.py Instruction listed below change the Model to that listed next to it.
+
+1. Coding_Agent_UsesMyAgent_WIN_Laptop  Moonshot  kimi-k3 reasoning=Max
+2. Code_Scout         					 Moonshot  kimi-k3 reasoning=Max
+3. Test_Verifier                        Moonshot  kimi-k3 reasoning=Max
+4. Code_Planner                         Moonshot  kimi-k3 reasoning=Max
+5. Finding_Verifier                     Moonshot  kimi-k3 reasoning=Max
+6. Security_Reviewer                    Moonshot  kimi-k3 reasoning=Max
+7. Git_Historian                        Moonshot  kimi-k3 reasoning=Max
+8. Code_Simplifier                      Moonshot  kimi-k3 reasoning=Max
+
