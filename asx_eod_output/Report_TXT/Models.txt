@@ -91,3 +91,46 @@ For each MyAgent.py Instruction listed below change the Model to that listed nex
 7. Git_Historian                        Moonshot  kimi-k3 reasoning=Max
 8. Code_Simplifier                      Moonshot  kimi-k3 reasoning=Max
 
+All done — Esc-to-exit is implemented and the full keyboard feature set is verified. Everything is in HelloWorld.cpp (156 insertions, 3 deletions), uncommitted.
+
+Final keyboard map for the calculator:
+- Tab / Shift-Tab: move between buttons (C … . in grid order)
+- Arrow keys: move within the button group (via IsDialogMessage)
+- PgUp / PgDn: move one grid row up/down in the same column (span-aware: +→=, 2→0; clamped at edges)
+- Enter (or Space): press the focused button — Enter needed a DM_GETDEFID handler because owner-drawn buttons aren't recognised as push buttons
+- Tab past '.' or Shift+Tab before C: activate the menu bar (synthetic F10, posted as WM_SYSKEYDOWN/UP — bit-identical to a real F10); arrows navigate, Enter opens/activates, Esc leaves the menu
+- Esc (outside menus/dialogs): exits the app, like Alt+F4 (which also still works, along with Alt+Space→C)
+- Focus is restored to the last-used button after the colour dialogs or menu bar (BS_NOTIFY + BN_SETFOCUS tracking + WM_SETFOCUS forwarding), so Enter never goes dead
+
+Verification (all passing):
+- Warning-clean Debug|x64 and Release|x64 builds.
+- Two scripted GUI smoke suites against the real app with injected keyboard input: full chained calculation via Tab/Shift-Tab/Enter (787→⌫→+9=87), arrow navigation, PgUp/PgDn incl. spanning buttons and edge clamping, menu-bar activation from both Tab edges, Settings popup → Button Colours → colour dialog cancelled with Esc → focus restored, and Escape closing the app. Multiple consecutive passes (one intermittent harness timing flake was diagnosed with per-step probes — injected-key pacing, not app logic — and the test was made robust).
+- git diff --check clean; file normalized to uniform CRLF (zero content change; re-verified by rebuild + suites).
+
+Left undone: nothing; not committed per instructions.
+
+Delegation:
+- Code_Reviewer ×3 completed: no findings (feature 1); 2 low findings (feature 2); 2 low/informational findings (Esc change). Two further attempts timed out after launching the GUI app (orphans killed).
+- Code_Simplifier ×2 completed: no suggestions (feature 1); 3 total suggestions applied later (GetFocusedControlId helper, merged PgUp/PgDn branch, FocusControl helper).
+- Finding_Verifier ×4 completed: F10-as-SYSKEY CONFIRMED (fixed); Tab-autorepeat REFUTED; both Esc-change nits REFUTED. One attempt timed out.
+
+Standing offer: update CLAUDE.md's Purpose and Verification sections to record the keyboard support and smoke-test procedure. Reply yes or no.
+
+
+
+********
+Look at the text body of the most recent email in the INBOX folder of the namor5772@gmail.com account with its Subject starting with the text "Summary of Unread Emails". The Body contains a numbered list of emails.
+
+*****
+Trash all numbered emails only from all accounts even if they are in spam folders EXCEPT for number 43 and any SPECIFYING LIST EMAILS.
+Process all numbered SPECIFYING LIST EMAILS.
+Finally close Excel if it is open and also close any browsers if they are open. 
+***** 
+
+Identify the model and parameters used in this agent run using the available Meta tools.
+Compose and then send email:
+From: roman@ri.com.au
+To: namor5772@gmail.com
+Subject: AGENT FNE3 RUN
+Body: {detailed summary of your actions}
+
