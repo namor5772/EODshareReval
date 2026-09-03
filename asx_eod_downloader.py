@@ -365,6 +365,22 @@ def main():
         df.to_csv(out_path, index=False)
         print(f"\nSaved consolidated CSV: {out_path}")
 
+    # ---- Self-heal: remove any duplicate (Date, Ticker) rows ----
+    # A rerun or an interrupted overwrite-then-append can leave the same day
+    # appended twice, which doubles the daily total in the portfolio chart.
+    if os.path.exists(out_path):
+        try:
+            check_df = pd.read_csv(out_path, dtype=str)
+            dup_mask = check_df.duplicated(subset=["Date", "Ticker"], keep="last")
+            if dup_mask.any():
+                n_dups = int(dup_mask.sum())
+                check_df = check_df[~dup_mask]
+                check_df = check_df.sort_values(["Date", "Ticker"]).reset_index(drop=True)
+                check_df.to_csv(out_path, index=False)
+                print(f"\nRemoved {n_dups} duplicate (Date, Ticker) row(s) from: {out_path}")
+        except Exception as e:
+            print(f"\nWarning: duplicate check skipped ({e})")
+
     # Generate the last-two-dates aligned TXT report when CSV has been touched
     if AUTO_GENERATE_LAST_TWO_REPORT and generate_last_two_report is not None and os.path.exists(out_path):
         try:

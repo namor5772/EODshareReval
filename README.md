@@ -93,6 +93,7 @@ When `asx_eod_output/DailyData.csv` already exists:
 - It removes the existing rows for that last date from the CSV and writes back fresh data for that date, then appends any newer dates.
 - If the download does not include that last date (for example, you choose an earlier range), it simply appends rows for dates strictly newer than the last date already in the CSV.
 - If your End date is before the adjusted Start date, the script adjusts End = Start to keep the range valid.
+- After writing, the script re-reads the CSV and removes any duplicate `(Date, Ticker)` rows (keeping the last occurrence). This self-heals the file if a rerun or interrupted run appended the same day twice.
 
 Tip: In interactive mode, to refresh the last day and append the current day using defaults, just press Enter twice at the prompts.
 

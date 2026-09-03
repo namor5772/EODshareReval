@@ -90,6 +90,8 @@ Tickers_and_Shares.txt → asx_eod_downloader.py → yfinance API → DailyData.
 
 When `DailyData.csv` exists, the script always refreshes the last date present (to handle Yahoo Finance data lag), then appends any newer dates. The default start date is the last date in the CSV; the default end date is today.
 
+After writing, the script re-reads the CSV and drops any duplicate `(Date, Ticker)` rows (keep last), so a rerun that appends the same day twice self-heals instead of doubling that day's portfolio total.
+
 ## Scheduled Task
 
 A Windows Task Scheduler job named **"ASX EOD Downloader"** runs automatically:
