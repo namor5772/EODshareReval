@@ -171,7 +171,10 @@ def generate_last_two_report(csv_path: str = CSV_PATH,
             # Skip tickers that lack the latest date
             continue
         c2, units2 = data.get((d2, ticker), (0.0, 0))
-        c1, _units1 = data.get((d1, ticker), (0.0, units2))
+        # A ticker with no row on the previous date (newly added holding) has
+        # no prior close to compare against: report zero change rather than
+        # counting its whole value as a day gain.
+        c1, _units1 = data.get((d1, ticker), (c2, units2))
         change = c2 - c1
         pct = (change / c1 * 100.0) if c1 else 0.0
         value = units2 * c2
